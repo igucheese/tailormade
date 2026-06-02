@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "tailormade:patterns_boots",
+  "ingredients": [
+    { "item": "tailormade:pattern_chestplate" }
+  ],
+  "result": {
+    "id": "tailormade:pattern_boots",
+    "count": 1
+  }
+}

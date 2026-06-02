@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "tailormade:pattern_helmet",
+    "tailormade:pattern_chestplate",
+    "tailormade:pattern_leggings",
+    "tailormade:pattern_boots"
+  ]
+}

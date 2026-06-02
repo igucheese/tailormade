@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "tailormade:block/bleaching_counter" },
+		"facing=south": { "model": "tailormade:block/bleaching_counter", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/bleaching_counter", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/bleaching_counter", "y": 90 }
+	}
+}

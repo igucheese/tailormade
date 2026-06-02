@@ -1,0 +1,68 @@
+package com.tailormade.tailor.registries;
+
+import com.tailormade.tailor.network.ConfirmBleachPayloadHandler;
+import com.tailormade.tailor.network.ConfirmTailorPayloadHandler;
+import com.tailormade.tailor.network.SaveDesignPayloadHandler;
+import com.tailormade.tailor.network.SaveSkinLayerPayloadHandler;
+import com.tailormade.tailor.network.payloads.*;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
+import static com.tailormade.tailor.Tailormade.MODID;
+
+@EventBusSubscriber(modid = MODID)
+public class ModNetworking {
+    @SubscribeEvent
+    public static void register(final RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar("1.0.0"); // プロトコルバージョン
+        /**
+         * Client to Server
+         */
+        registrar.playToServer(
+                SaveDesignPayload.TYPE,
+                SaveDesignPayload.STREAM_CODEC,
+                SaveDesignPayloadHandler::handle
+        );
+        registrar.playToServer(
+                ConfirmTailorPayload.TYPE,
+                ConfirmTailorPayload.STREAM_CODEC,
+                ConfirmTailorPayloadHandler::handle
+        );
+        registrar.playToServer(
+                SaveSkinLayerPayload.TYPE,
+                SaveSkinLayerPayload.STREAM_CODEC,
+                SaveSkinLayerPayloadHandler::handle
+        );
+        registrar.playToServer(
+                SaveUnderwarePayload.TYPE,
+                SaveUnderwarePayload.STREAM_CODEC,
+                SaveUnderwarePayload::handle
+        );
+        registrar.playToServer(
+                ConfirmBleachPayload.TYPE,
+                ConfirmBleachPayload.STREAM_CODEC,
+                ConfirmBleachPayloadHandler::handle
+        );
+
+        /**
+         * Server to Client
+         */
+        registrar.playToClient(
+                SyncSkinLayerPayload.TYPE,
+                SyncSkinLayerPayload.STREAM_CODEC,
+                SyncSkinLayerPayload::handle
+        );
+        registrar.playToClient(
+                SyncUnderwarePayload.TYPE,
+                SyncUnderwarePayload.STREAM_CODEC,
+                SyncUnderwarePayload::handle
+        );
+        registrar.playToClient(
+                SyncDesignPayload.TYPE,
+                SyncDesignPayload.STREAM_CODEC,
+                SyncDesignPayload::handle
+        );
+    }
+}

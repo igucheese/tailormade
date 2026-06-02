@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "tailormade:block/designer" },
+		"facing=south": { "model": "tailormade:block/designer", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/designer", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/designer", "y": 90 }
+	}
+}

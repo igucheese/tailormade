@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "tailormade:patterns_chestplate",
+  "ingredients": [
+    { "item": "tailormade:pattern_helmet" }
+  ],
+  "result": {
+    "id": "tailormade:pattern_chestplate",
+    "count": 1
+  }
+}

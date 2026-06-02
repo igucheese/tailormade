@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "tailormade:block/powder_room" },
+		"facing=south": { "model": "tailormade:block/powder_room", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/powder_room", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/powder_room", "y": 90 }
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:potion" },
+    { "item": "minecraft:quartz" },
+    { "item": "minecraft:redstone" }
+  ],
+  "result": {
+    "id": "tailormade:bleach",
+    "count": 1
+  }
+}
