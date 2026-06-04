@@ -2,6 +2,7 @@ package com.tailormade.tailor.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
@@ -66,6 +67,8 @@ public class TailorHumanoidArmorLayer<
             EquipmentSlot slot,
             int packedLight,
             A model) {
+
+        if (MannequinStylePreviewHelper.isHideArmor()) return;
 
         ItemStack stack = entity.getItemBySlot(slot);
         if (!stack.isEmpty() && stack.has(ModDataComponents.PATTERN_ID.get())) {

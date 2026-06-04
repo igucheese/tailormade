@@ -1,6 +1,7 @@
 package com.tailormade.tailor.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -36,6 +37,8 @@ public class TailorArmorRenderLayer
 
         ResourceLocation texture = resolveTexture(player);
         if (texture == null) return;
+
+        if (MannequinStylePreviewHelper.isHideArmor()) { return; }
 
         // entityTranslucentCull: alpha=0（消しゴム）を正しく透明にする
         getParentModel().renderToBuffer(

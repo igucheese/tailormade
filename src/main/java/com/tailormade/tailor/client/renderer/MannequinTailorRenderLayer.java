@@ -7,6 +7,7 @@ import com.tailormade.tailor.entities.blockentities.MannequinEntity;
 import com.tailormade.tailor.registries.ModDataComponents;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -18,12 +19,11 @@ import java.util.Map;
 
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
-public class MannequinTailorRenderLayer
-        extends RenderLayer<MannequinEntity, MannequinModel> {
-
-    public MannequinTailorRenderLayer(
-            RenderLayerParent<MannequinEntity, MannequinModel> parent) {
+public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, MannequinModel> {
+    private final MannequinModel layerModel;
+    public MannequinTailorRenderLayer(RenderLayerParent<MannequinEntity, MannequinModel> parent, EntityRendererProvider.Context ctx) {
         super(parent);
+        this.layerModel = new MannequinModel(ctx.bakeLayer(MannequinModel.LAYER_LOCATION));
     }
 
     @Override
@@ -32,7 +32,6 @@ public class MannequinTailorRenderLayer
                        float limbSwing, float limbSwingAmount,
                        float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
-
         Map<PatternType, int[]> pixelMap = collectPixelData(entity);
         if (pixelMap.isEmpty()) return;
 
@@ -43,13 +42,16 @@ public class MannequinTailorRenderLayer
         ResourceLocation texture = compositor.composeForPreview(pixelMap);
         if (texture == null) return;
 
-        getParentModel().renderToBuffer(
+        poseStack.pushPose();
+        poseStack.scale(1.001F, 1.001F, 1.001F);
+        layerModel.setupAnim(entity, 0, 0, 0, 0, 0);
+        layerModel.renderToBuffer(
                 poseStack,
-                bufferSource.getBuffer(RenderType.entityTranslucentCull(texture)),
+                bufferSource.getBuffer(RenderType.entityCutoutNoCull(texture)),
                 packedLight,
-                OverlayTexture.NO_OVERLAY,
-                0xFFFFFFFF
+                OverlayTexture.NO_OVERLAY
         );
+        poseStack.popPose();
     }
 
     private Map<PatternType, int[]> collectPixelData(MannequinEntity entity) {
@@ -61,7 +63,6 @@ public class MannequinTailorRenderLayer
             var stack = entity.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
 
-//            var pd = stack.get(ModDataComponents.PIXEL_DATA.get());
             var pd = getPixelDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
             if (pd == null) continue;
 

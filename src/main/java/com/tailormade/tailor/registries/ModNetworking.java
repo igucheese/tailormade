@@ -64,5 +64,10 @@ public class ModNetworking {
                 SyncDesignPayload.STREAM_CODEC,
                 SyncDesignPayload::handle
         );
+        registrar.playToClient(
+                SyncMannequinPayload.TYPE,
+                SyncMannequinPayload.STREAM_CODEC,
+                SyncMannequinPayload::handle
+        );
     }
 }

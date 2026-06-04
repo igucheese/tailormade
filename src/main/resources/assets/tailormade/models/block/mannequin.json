@@ -3,7 +3,8 @@
 	"credit": "Igucheese",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "tailormade:block/tailor_mannequin"
+		"0": "tailormade:block/tailor_mannequin",
+		"particle": "tailormade:block/tailor_mannequin"
 	},
 	"elements": [
 		{

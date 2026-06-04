@@ -29,9 +29,9 @@ public class SyncDataLayers {
     }
 
     public static void syncUnderwearLayer(ServerPlayer player) {
-        UnderwearSetting underwearSetting = getUnderwearSetting(player.getUUID());
+        UnderwearSetting underwearSetting = WardrobeSavedData.get((ServerLevel) player.level()).getSetting(player.getUUID());
         if (underwearSetting != null) {
-            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString());
+            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + underwearSetting);
             PacketDistributor.sendToPlayer(player, new SyncUnderwarePayload(player.getUUID(), underwearSetting));
         } else {
             Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear has been skipped.");
@@ -42,7 +42,7 @@ public class SyncDataLayers {
         Tailormade.LOGGER.info("[SYNC_DESIGN] Sync All Masterpieces!");
         DesignData data = DesignData.get(player.serverLevel());
         Collection<DesignDataRecord> designs = data.index();
-//        PacketDistributor.sendToPlayer(player, new SyncAllDesignsPayload(designs));
+//        PacketDistributor.sendToPlayer(player, new SyncAllDesignsPayload(designs)); // いずれこうしたいね
         for (DesignDataRecord design : designs) {
             Tailormade.LOGGER.info("[SYNC_DESIGN] " + design.uuid() + ", name: " + design.name() + ", data: " + design.pixelData());
             PacketDistributor.sendToPlayer(player, new SyncDesignPayload(design.uuid(), design));

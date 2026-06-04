@@ -338,37 +338,79 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
         PatternType type = patternItem.getPatternType(mainStack);
         PatternType.CanvasSegment[] segments = type.getSegments();
-        if (segments.length <= 1) return; // 単一セグメントなら不要
+        if (segments.length <= 1) return;
 
-        String[] labels = segmentLabels(type);
+        // 上段・下段のどの canvasY 値があるか収集
+        java.util.Set<Integer> rowBoundaries = new java.util.TreeSet<>();
+        java.util.Set<Integer> colBoundaries = new java.util.TreeSet<>();
+        for (PatternType.CanvasSegment seg : segments) {
+            rowBoundaries.add(seg.canvasY());
+            colBoundaries.add(seg.canvasX());
+        }
 
-        for (int i = 0; i < segments.length; i++) {
-            PatternType.CanvasSegment seg = segments[i];
+        // 行境界線（水平）
+        for (int cy : rowBoundaries) {
+            if (cy == 0) continue;
+            int ly = renderY + (int)(cy * scale);
+            g.fill(renderX, ly, renderX + (int)(type.getCanvasW() * scale), ly + 1, 0xAAFFFF00);
+        }
+        // 列境界線（垂直）- 同じ canvasY の行内でのみ描画
+        for (int cx : colBoundaries) {
+            if (cx == 0) continue;
+            int lx = renderX + (int)(cx * scale);
+            g.fill(lx, renderY, lx + 1, renderY + (int)(type.getCanvasH() * scale), 0xAAFFFF00);
+        }
 
-            // セグメント開始位置に縦線（最初のセグメントは不要）
-            if (i > 0) {
-                int lx = renderX + (int)(seg.canvasX() * scale);
-                int ly = renderY;
-                int lh = (int)(canvas.getHeight() * scale);
-                g.fill(lx, ly, lx + 1, ly + lh, 0xAAFFFF00); // 黄色の境界線
-            }
-
-            // セグメント中央にラベル
-            if (labels != null && i < labels.length) {
-                int labelX = renderX + (int)((seg.canvasX() + seg.w() / 2.0f) * scale) - 10;
-                int labelY = renderY - 8;
-                g.drawString(font, labels[i], labelX, labelY, 0xFFAAAAAA, false);
+        // セグメントラベル（各セグメントの左上に表示）
+        String[][] labels = segmentLabels2D(type);
+        if (labels != null) {
+            for (PatternType.CanvasSegment seg : segments) {
+                int col = getColIndex(segments, seg.canvasX());
+                int row = getRowIndex(segments, seg.canvasY());
+                if (row < labels.length && col < labels[row].length) {
+                    String label = labels[row][col];
+                    int lx = renderX + (int)(seg.canvasX() * scale) + 2;
+                    int ly = renderY + (int)(seg.canvasY() * scale) + 2;
+                    g.drawString(font, label, lx, ly, 0xFFAAAAAA, false);
+                }
             }
         }
     }
 
-    private String[] segmentLabels(PatternType type) {
+    private String[][] segmentLabels2D(PatternType type) {
         return switch (type) {
-            case CHEST -> new String[]{"Body", "R.Arm", "L.Arm"};
-            case LEGS  -> new String[]{"R.Leg", "L.Leg"};
-            case FEET  -> new String[]{"R.Boot", "L.Boot"};
-            default    -> null;
+            case CHEST -> new String[][]{
+                    {"Body",    "R.Arm",    "L.Arm"},     // 上段: スキン
+                    {"BodyOv",  "R.ArmOv",  "L.ArmOv"}   // 下段: オーバーレイ
+            };
+            case LEGS -> new String[][]{
+                    {"R.Leg",   "L.Leg"},   // 上段: スキン
+                    {"R.LegOv", "L.LegOv"} // 下段: オーバーレイ
+            };
+            case FEET -> new String[][]{
+                    {"R.Sole", "L.Sole"},   // 靴底
+                    {"R.Side", "L.Side"}    // 側面下6px
+            };
+            default -> null;
         };
+    }
+
+    private int getColIndex(PatternType.CanvasSegment[] segs, int canvasX) {
+        java.util.List<Integer> cols = new java.util.ArrayList<>();
+        for (PatternType.CanvasSegment s : segs) {
+            if (!cols.contains(s.canvasX())) cols.add(s.canvasX());
+        }
+        java.util.Collections.sort(cols);
+        return cols.indexOf(canvasX);
+    }
+
+    private int getRowIndex(PatternType.CanvasSegment[] segs, int canvasY) {
+        java.util.List<Integer> rows = new java.util.ArrayList<>();
+        for (PatternType.CanvasSegment s : segs) {
+            if (!rows.contains(s.canvasY())) rows.add(s.canvasY());
+        }
+        java.util.Collections.sort(rows);
+        return rows.indexOf(canvasY);
     }
 
     private void drawGrid(GuiGraphics g, int rx, int ry, int rw, int rh, float scale) {

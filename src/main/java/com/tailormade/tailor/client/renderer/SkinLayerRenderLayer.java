@@ -140,7 +140,7 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
                 for (int y = 0; y < seg.h(); y++) {
                     for (int x = 0; x < seg.w(); x++) {
                         int srcIdx  = (seg.uvY() + y) * 64 + (seg.uvX() + x);
-                        int dstIdx  = y * type.getCanvasW() + (seg.canvasX() + x);
+                        int dstIdx = (seg.canvasY() + y) * type.getCanvasW() + (seg.canvasX() + x);
                         if (srcIdx < full64x64.length && dstIdx < canvas.length) {
                             canvas[dstIdx] = full64x64[srcIdx];
                         }

@@ -34,7 +34,7 @@ public record SyncUnderwarePayload (UUID uuid, UnderwearSetting setting) impleme
 //                SkinLayerRenderLayer.updateUnderwear(packet.uuid(), packet.setting()));
         ctx.enqueueWork(() -> {
             UnderwearDataClientCache.updateCache(packet.uuid(), packet.setting());
-            Tailormade.LOGGER.info("[CACHE_SYNC_UNDERWEAR] Sync completed: " + packet.uuid());
+            Tailormade.LOGGER.info("[CACHE_SYNC_UNDERWEAR] Sync completed: " + packet.uuid() + " body: " + packet.setting());
         });
     }
 }
