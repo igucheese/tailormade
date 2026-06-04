@@ -3,9 +3,11 @@ package com.tailormade.tailor.client.screen;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
+import com.tailormade.tailor.data.UnderwearDataClientCache;
 import com.tailormade.tailor.data.UnderwearSetting;
 import com.tailormade.tailor.data.UnderwearType;
 import com.tailormade.tailor.network.payloads.SaveUnderwarePayload;
+import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -79,7 +81,8 @@ public class WardrobeScreen extends Screen {
         // 現在の設定をロード
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            UnderwearSetting current = SkinLayerRenderLayer.getUnderwearSetting(mc.player.getUUID());
+//            UnderwearSetting current = SkinLayerRenderLayer.getUnderwearSetting(mc.player.getUUID());
+            UnderwearSetting current = UnderwearDataClientCache.get(mc.player.getUUID());
             if (current != null) {
                 selectedType  = current.type();
                 selectedColor = current.color();
@@ -125,6 +128,7 @@ public class WardrobeScreen extends Screen {
         // 下着のみプレビュー
         SkinLayerRenderLayer.setUnderwearPreview(
                 new UnderwearSetting(selectedType, selectedColor));
+        MannequinStylePreviewHelper.setHideArmor(true);
 
         float savedXRot  = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
@@ -151,6 +155,7 @@ public class WardrobeScreen extends Screen {
             mc.player.setXRot(savedXRot);
             mc.player.xRotO = savedXRotO;
             SkinLayerRenderLayer.clearPreview();
+            MannequinStylePreviewHelper.setHideArmor(false);
         }
     }
 

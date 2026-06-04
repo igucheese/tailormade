@@ -3,15 +3,15 @@ package com.tailormade.tailor.client.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
+import com.tailormade.tailor.client.gui.PowderRoomEditableRegions;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
-import com.tailormade.tailor.data.PatternType;
-import com.tailormade.tailor.data.PixelData;
-import com.tailormade.tailor.data.UnderwearSetting;
+import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveSkinLayerPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import com.tailormade.tailor.utils.PixelCanvas;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,6 +21,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
@@ -106,6 +107,8 @@ public class PowderRoomScreen extends Screen {
 
     // プレビュー用の下着設定（現在選択中のもの）
     private UnderwearSetting previewUnderwear = UnderwearSetting.DEFAULT;
+    private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
+    private DyeColor selectedColor = DyeColor.WHITE;
 
     private TailorTextureCompositor previewCompositor;
     private boolean hasUnsavedChanges = false;
@@ -129,15 +132,27 @@ public class PowderRoomScreen extends Screen {
         // 既存の肌色データをロード
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            int[] existing = SkinLayerRenderLayer.getSkinPixels(mc.player.getUUID());
+            PixelData existingData = SkinDataClientCache.get(mc.player.getUUID());
+            int[] existing = existingData != null ? existingData.getPixels() : null;
             if (existing != null) {
                 canvas.loadPixels(existing);
             } else {
                 // デフォルト: 頭部スキンから肌色をサンプリングして塗りつぶし
                 fillWithSampledSkinColor(mc.player);
             }
+
+            UnderwearSetting current = UnderwearDataClientCache.get(mc.player.getUUID());
+            if (current != null) {
+                selectedType  = current.type();
+                selectedColor = current.color();
+                this.previewUnderwear = current;
+                System.out.println("[CHECK][CURRENT UNDERWARE TYPE] : " + selectedType + ", COLOR: " + selectedColor);
+            }
         }
+
         canvas.init();
+        PowderRoomEditableRegions.lockNonEditablePixels(canvas);
+        canvas.setIsSkin(true);
 
         // パレット
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
@@ -201,6 +216,20 @@ public class PowderRoomScreen extends Screen {
         } catch (Exception ignored) {}
 
         Arrays.fill(canvas.getPixels(), skinColor);
+    }
+
+    private void clearHeadArea() {
+        PatternType head = PatternType.HEAD;
+        for (PatternType.CanvasSegment seg : head.getSegments()) {
+            for (int y = 0; y < seg.h(); y++) {
+                for (int x = 0; x < seg.w(); x++) {
+                    int px = seg.uvX() + x;
+                    int py = seg.uvY() + y;
+                    // canvas は 64x64 のフラット配列
+                    canvas.setPixel(px, py, PixelCanvas.TRANSPARENT, 1);
+                }
+            }
+        }
     }
 
     // ---- 描画 -------------------------------------------------
@@ -301,6 +330,8 @@ public class PowderRoomScreen extends Screen {
         }
         SkinLayerRenderLayer.setUnderwearPreview(previewUnderwear);
 
+        MannequinStylePreviewHelper.setHideArmor(true);
+
         float savedXRot  = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
         mc.player.setXRot(previewPitch);
@@ -329,6 +360,7 @@ public class PowderRoomScreen extends Screen {
             mc.player.setXRot(savedXRot);
             mc.player.xRotO = savedXRotO;
             SkinLayerRenderLayer.clearPreview();
+            MannequinStylePreviewHelper.setHideArmor(false);
         }
     }
 
@@ -500,6 +532,9 @@ public class PowderRoomScreen extends Screen {
         int renderY  = topPos  + ED_Y + (ED_H - renderH) / 2;
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
+
+        if (!PowderRoomEditableRegions.isEditable(px[0], px[1])) return;
+
         if (palette.isEraserMode()) {
             if (TOOL_MODE == "bucket") {
                 canvas.fill(TRANSPARENT);
@@ -523,6 +558,16 @@ public class PowderRoomScreen extends Screen {
             }
         }
         hasUnsavedChanges = true;
+    }
+
+    private boolean isHeadArea(int px, int py) {
+        for (PatternType.CanvasSegment seg : PatternType.HEAD.getSegments()) {
+            if (px >= seg.uvX() && px < seg.uvX() + seg.w()
+                    && py >= seg.uvY() && py < seg.uvY() + seg.h()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---- SAVE -------------------------------------------------
@@ -566,7 +611,7 @@ public class PowderRoomScreen extends Screen {
             for (int y = 0; y < seg.h(); y++) {
                 for (int x = 0; x < seg.w(); x++) {
                     int srcIdx = (seg.uvY() + y) * 64 + (seg.uvX() + x);
-                    int dstIdx = y * canvasW + (seg.canvasX() + x);
+                    int dstIdx = (seg.canvasY() + y) * type.getCanvasW() + (seg.canvasX() + x);
                     if (srcIdx < full64x64.length && dstIdx < canvas.length) {
                         canvas[dstIdx] = full64x64[srcIdx];
                     }

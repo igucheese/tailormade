@@ -33,8 +33,8 @@ public class ClientRenderEvents {
         modEventBus.addListener(ClientRenderEvents::onAddLayers);
 //        forgeBus.addListener(ClientRenderEvents::onRenderLivingPre);
         forgeBus.addListener(ClientRenderEvents::onEquipmentChange);
-        modEventBus.addListener(ClientRenderEvents::onRegisterRenderers);
         modEventBus.addListener(ClientRenderEvents::onRegisterLayerDefinitions);
+        modEventBus.addListener(ClientRenderEvents::onRegisterRenderers);
     }
 
     public static void registerModBus(IEventBus modBus) {

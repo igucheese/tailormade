@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "tailormade:entity/mannequin_empty",
+    "particle": "tailormade:entity/mannequin_empty"
+  }
+}

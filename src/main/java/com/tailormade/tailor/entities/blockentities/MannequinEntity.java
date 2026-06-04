@@ -1,11 +1,13 @@
 package com.tailormade.tailor.entities.blockentities;
 
+import com.tailormade.tailor.network.payloads.SyncMannequinPayload;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
@@ -13,13 +15,15 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MannequinEntity extends LivingEntity {
 
-    private final NonNullList<ItemStack> armorItems =
+    public final NonNullList<ItemStack> armorItems =
             NonNullList.withSize(4, ItemStack.EMPTY);
-    private final NonNullList<ItemStack> handItems =
+    public final NonNullList<ItemStack> handItems =
             NonNullList.withSize(2, ItemStack.EMPTY);
+    private float facingYRot = 0F;
 
     public MannequinEntity(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -27,7 +31,29 @@ public class MannequinEntity extends LivingEntity {
         this.setNoGravity(true);
     }
 
-    // ---- LivingEntity 必須実装 --------------------------------
+    @Override
+    public float getVisualRotationYInDegrees() {
+        return facingYRot;
+    }
+
+    public void setFacingYRot(float yRot) {
+        this.facingYRot = yRot;
+    }
+
+//    @Override
+//    public float getYRot() {
+//        return 0F;
+//    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        return false;
+    }
+
+    @Override
+    public void knockback(double strength, double x, double z) {
+        // 何もしない
+    }
 
     @Override
     public Iterable<ItemStack> getArmorSlots() {
@@ -62,6 +88,12 @@ public class MannequinEntity extends LivingEntity {
             case MAINHAND -> handItems.set(0, stack);
             case OFFHAND  -> handItems.set(1, stack);
         }
+
+        if (!level().isClientSide()) {
+            PacketDistributor.sendToPlayersTrackingEntity(this,
+                    new SyncMannequinPayload(this.getId(), slot.ordinal(), stack.copy())
+            );
+        }
     }
 
     @Override
@@ -78,13 +110,9 @@ public class MannequinEntity extends LivingEntity {
         return 1.62F;
     }
 
-    // ---- 装備セット（外部から呼ぶ用） -------------------------
-
     public void setArmorItem(EquipmentSlot slot, ItemStack stack) {
         setItemSlot(slot, stack.copy());
     }
-
-    // ---- プレイヤーインタラクション ---------------------------
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
@@ -120,8 +148,6 @@ public class MannequinEntity extends LivingEntity {
 
         return InteractionResult.PASS;
     }
-
-    // ---- NBT --------------------------------------------------
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {

@@ -1,11 +1,13 @@
 package com.tailormade.tailor.utils;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.tailormade.tailor.client.gui.PowderRoomEditableRegions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 
@@ -37,6 +39,7 @@ public class PixelCanvas {
     private DynamicTexture dynamicTexture;
     private ResourceLocation textureLocation;
     private boolean dirty = false;
+    private boolean isSkin = false;
 
     public PixelCanvas(int width, int height) {
         this.width  = width;
@@ -80,6 +83,7 @@ public class PixelCanvas {
     }
 
     private void trySetPixel(int x, int y, int argbColor) {
+        if (isSkin && !PowderRoomEditableRegions.isEditable(x, y)) return;
         try {
             pixels[y * width + x] = argbColor;
         } catch (Exception e) {}
@@ -87,11 +91,18 @@ public class PixelCanvas {
 
     public void fill(int argbColor) {
         for (int i = 0; i < pixels.length; i++) {
-            try {
-                pixels[i] = argbColor;
-            } catch (Exception e) {}
+            int[] px = convertIndexToXY(i);
+            trySetPixel(px[0], px[1], argbColor);
         }
         dirty = true;
+    }
+
+    private int[] convertIndexToXY(int i) {
+        int x = i % width;
+        int y = (i - x) / width;
+        int[] coords = {x, y};
+        System.out.println("[CHECK][convertIndexToXY] " + i + " is " + Arrays.toString(coords));
+        return coords;
     }
 
     public int getPixel(int x, int y) {
@@ -105,6 +116,10 @@ public class PixelCanvas {
 
     private boolean inBounds(int x, int y) {
         return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    public void setIsSkin(boolean isSkin) {
+        this.isSkin = isSkin;
     }
 
     // ---- Undo / Redo -----------------------------------------
@@ -171,7 +186,7 @@ public class PixelCanvas {
 
     // ---- データ入出力 ----------------------------------------
 
-    public int[] getPixels()          { return pixels.clone(); }
+    public int[] getPixels() { return pixels.clone(); }
     public void loadPixels(int[] data) {
         if (data == null || data.length != pixels.length) return;
         System.arraycopy(data, 0, pixels, 0, pixels.length);

@@ -32,8 +32,7 @@ public record SaveUnderwarePayload (UnderwearSetting setting) implements CustomP
             if (!(ctx.player() instanceof ServerPlayer player)) return;
 
             ServerLevel overworld = player.getServer().overworld();
-            WardrobeSavedData.get(overworld)
-                    .setSetting(player.getUUID(), packet.setting());
+            WardrobeSavedData.get(overworld).setSetting(player.getUUID(), packet.setting());
 
             // 全員に配信
             SyncUnderwarePayload syncPacket = new SyncUnderwarePayload(player.getUUID(), packet.setting());

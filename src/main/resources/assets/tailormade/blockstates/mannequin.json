@@ -1,5 +1,8 @@
 {
 	"variants": {
-		"": { "model": "tailormade:block/mannequin" }
+		"facing=north": { "model": "tailormade:block/mannequin" },
+		"facing=south": { "model": "tailormade:block/mannequin", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/mannequin", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/mannequin", "y": 90 }
 	}
 }
