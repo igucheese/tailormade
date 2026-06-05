@@ -2,7 +2,9 @@ package com.tailormade.tailor.client.screen;
 
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
+import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
+import com.tailormade.tailor.client.renderer.UnderwearTextureCompositor;
 import com.tailormade.tailor.data.UnderwearDataClientCache;
 import com.tailormade.tailor.data.UnderwearSetting;
 import com.tailormade.tailor.data.UnderwearType;
@@ -50,9 +52,10 @@ public class WardrobeScreen extends Screen {
     private int imageHeight;
 
     private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
-    private DyeColor selectedColor = DyeColor.WHITE;
+    private int selectedColor = 0xFF000000;
     private ColorPalette palette;
     private ColorPickerWidget colorPicker;
+    private HueBarWidget hueBar;
 
     private float previewYaw   = 235.0f; // 正面が見える初期値
     private float previewPitch = 0.0f;
@@ -61,6 +64,10 @@ public class WardrobeScreen extends Screen {
     private double dragStartX = -1;
     private double dragStartY = -1;
     private Button saveButton;
+
+    private UnderwearTextureCompositor underwearCompositor;
+    private static final ResourceLocation defaultUnderwearLocation = ResourceLocation.fromNamespaceAndPath(MODID, "textures/underwear/male_boxer.png");
+    private ResourceLocation composedTexture = null;
 
     public WardrobeScreen() {
         super(Component.translatable("gui.tailormade.wardrobe"));
@@ -75,20 +82,30 @@ public class WardrobeScreen extends Screen {
 
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
         palette.disableEraser();
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 8);
+        hueBar.setH(16);
+        hueBar.init();
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 8 + 16);
         colorPicker.init();
+        colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
         // 現在の設定をロード
         Minecraft mc = Minecraft.getInstance();
+        UnderwearSetting current = null;
         if (mc.player != null) {
 //            UnderwearSetting current = SkinLayerRenderLayer.getUnderwearSetting(mc.player.getUUID());
-            UnderwearSetting current = UnderwearDataClientCache.get(mc.player.getUUID());
+            current = UnderwearDataClientCache.get(mc.player.getUUID());
             if (current != null) {
                 selectedType  = current.type();
                 selectedColor = current.color();
-                System.out.println("[CHECK][CURRENT UNDERWARE TYPE] : " + selectedType + ", COLOR: " + selectedColor);
+                palette.setSelectedColor(current.color());
+                System.out.println("[CHECK][WR CURRENT UNDERWARE TYPE] : " + selectedType + ", COLOR: " + selectedColor);
             }
         }
+
+        underwearCompositor = new UnderwearTextureCompositor();
+        underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation);
+        applyUnderwearPreview();
 
         // SAVE ボタン
         int saveX = leftPos + PV_X + PV_W - 63;
@@ -104,6 +121,7 @@ public class WardrobeScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBg(g, partialTick, mouseX, mouseY);
         palette.render(g, mouseX, mouseY);
+        hueBar.render(g, mouseX, mouseY);
         colorPicker.render(g, mouseX, mouseY);
         renderPreview(g, mouseX, mouseY);
         saveButton.render(g, mouseX, mouseY, partialTick);
@@ -126,8 +144,11 @@ public class WardrobeScreen extends Screen {
         if (mc.player == null) return;
 
         // 下着のみプレビュー
-        SkinLayerRenderLayer.setUnderwearPreview(
-                new UnderwearSetting(selectedType, selectedColor));
+        if (composedTexture != null) {
+            SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
+        } else {
+            SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor));
+        }
         MannequinStylePreviewHelper.setHideArmor(true);
 
         float savedXRot  = mc.player.getXRot();
@@ -167,6 +188,11 @@ public class WardrobeScreen extends Screen {
             if (!palette.isEraserMode()) {
                 colorPicker.setBaseColor(palette.getSelectedColor());
             }
+            applyUnderwearPreview();
+            return true;
+        }
+        if (hueBar.mousePressed(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
             return true;
         }
         if (colorPicker.mousePressed(mx, my)) {
@@ -176,10 +202,12 @@ public class WardrobeScreen extends Screen {
                     (picked >>  8) & 0xFF,
                     picked        & 0xFF
             );
+            applyUnderwearPreview();
             return true;
         }
         if (inTypeBoxes(mx, my)) {
             mouseClickedOnTypeBoxes(mx, my);
+            applyUnderwearPreview();
             return true;
         }
         // プレビュードラッグ
@@ -199,6 +227,7 @@ public class WardrobeScreen extends Screen {
         } else if (mx >= (this.leftPos + TYPE_X) && mx <= (this.leftPos + TYPE_X + TYPE_SIZE) && my >= (this.topPos + TYPE_Y+ (TYPE_SIZE * 3)) && my <= (this.topPos + TYPE_Y + (TYPE_SIZE * 4))) {
             selectedType = UnderwearType.FEMALE_BIKINI;
         }
+        underwearCompositor.init(selectedType.getTexture());
         System.out.println("[CHECK][mouseClickedOnTypeBoxes]" + selectedType);
     }
 
@@ -212,6 +241,13 @@ public class WardrobeScreen extends Screen {
             );
             dragStartX = mx;
             dragStartY = my;
+            return true;
+        }
+        if (hueBar.mouseDragged(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
+            // パレットにも反映
+            int base = hueBar.getSelectedBaseColor();
+            palette.setRgb((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF);
             return true;
         }
         if (colorPicker.mouseDragged(mx, my)) {
@@ -229,6 +265,7 @@ public class WardrobeScreen extends Screen {
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
         if (button == 0) { dragStartX = -1; dragStartY = -1; }
+        hueBar.mouseReleased();
         colorPicker.mouseReleased();
         return super.mouseReleased(mx, my, button);
     }
@@ -238,11 +275,32 @@ public class WardrobeScreen extends Screen {
                 && my >= topPos  + PV_Y && my < topPos  + PV_Y + PV_H;
     }
 
+    private void applyUnderwearPreview() {
+        if (underwearCompositor == null) return;
+
+        // パレットの選択色を取得
+        int argb = palette.getSelectedColor();
+        selectedColor = palette.getSelectedColor();
+        this.composedTexture = underwearCompositor.compose(argb);
+        System.out.println("[CHECK][APPLY UNDERWEAR TEX] " + composedTexture);
+        if (composedTexture == null) return;
+
+        SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
+    }
+
     // ---- SAVE -------------------------------------------------
 
     private void onSave() {
         PacketDistributor.sendToServer(new SaveUnderwarePayload(new UnderwearSetting(selectedType, selectedColor)));
         onClose();
+    }
+
+    @Override
+    public void removed() {
+        if (underwearCompositor != null) underwearCompositor.close();
+        if (hueBar != null) hueBar.close();
+        if (colorPicker != null) colorPicker.close();
+        super.removed();
     }
 
     @Override

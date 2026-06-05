@@ -3,6 +3,7 @@ package com.tailormade.tailor.network.payloads;
 import com.tailormade.tailor.data.UnderwearSetting;
 import com.tailormade.tailor.data.WardrobeSavedData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -19,11 +20,10 @@ public record SaveUnderwarePayload (UnderwearSetting setting) implements CustomP
             ResourceLocation.fromNamespaceAndPath(MODID, "save_underwear");
     public static final Type<SaveUnderwarePayload> TYPE = new Type<>(ID);
 
-    public static final StreamCodec<FriendlyByteBuf, SaveUnderwarePayload> STREAM_CODEC =
-            StreamCodec.of(
-                    (buf, p) -> UnderwearSetting.STREAM_CODEC.encode(buf, p.setting()),
-                    buf -> new SaveUnderwarePayload(UnderwearSetting.STREAM_CODEC.decode(buf))
-            );
+    public static final StreamCodec<FriendlyByteBuf, SaveUnderwarePayload> STREAM_CODEC = StreamCodec.composite(
+            UnderwearSetting.STREAM_CODEC, SaveUnderwarePayload::setting,
+            SaveUnderwarePayload::new
+    );
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 

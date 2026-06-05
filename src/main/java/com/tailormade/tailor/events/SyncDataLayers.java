@@ -18,23 +18,22 @@ import static com.tailormade.tailor.client.renderer.SkinLayerRenderLayer.getUnde
 
 public class SyncDataLayers {
     public static void syncSkinLayer(ServerPlayer player) {
-        PixelData savedSkin = PowderRoomSavedData.get((ServerLevel) player.level()).getSkinLayer(player.getUUID());
-        int[] skinPixels = savedSkin != null ? savedSkin.getPixels() : getSkinPixels(player.getUUID());
-        if (skinPixels != null) {
-            Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + player.getName().getString());
-            PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(player.getUUID(), skinPixels));
-        } else {
-            Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
+        Collection<PixelData> skins = PowderRoomSavedData.get((ServerLevel) player.level()).index();
+        for (PixelData skin : skins) {
+            if (skin.getPixels() != null) {
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + player.getName().getString());
+                PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(player.getUUID(), skin.getPixels()));
+            } else {
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
+            }
         }
     }
 
     public static void syncUnderwearLayer(ServerPlayer player) {
-        UnderwearSetting underwearSetting = WardrobeSavedData.get((ServerLevel) player.level()).getSetting(player.getUUID());
-        if (underwearSetting != null) {
-            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + underwearSetting);
-            PacketDistributor.sendToPlayer(player, new SyncUnderwarePayload(player.getUUID(), underwearSetting));
-        } else {
-            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear has been skipped.");
+        Collection<UnderwearSetting> settings = WardrobeSavedData.get((ServerLevel) player.level()).index();
+        for (UnderwearSetting setting : settings) {
+            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + setting);
+            PacketDistributor.sendToPlayer(player, new SyncUnderwarePayload(player.getUUID(), setting));
         }
     }
 

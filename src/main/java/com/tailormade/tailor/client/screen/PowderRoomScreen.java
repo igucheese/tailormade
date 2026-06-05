@@ -3,6 +3,7 @@ package com.tailormade.tailor.client.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
+import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.gui.PowderRoomEditableRegions;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
@@ -30,6 +31,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.tailormade.tailor.Tailormade.MODID;
@@ -92,6 +94,14 @@ public class PowderRoomScreen extends Screen {
     private PixelCanvas canvas;
     private ColorPalette palette;
     private ColorPickerWidget colorPicker;
+    private HueBarWidget hueBar;
+
+    // ズーム・パン
+    private float zoomScale = 1.0f;
+    private float panOffsetX = 0f;
+    private float panOffsetY = 0f;
+    private double rightDragStartX = -1;
+    private double rightDragStartY = -1;
 
     private EditBox rBox, gBox, bBox;
     private Button saveButton;
@@ -108,10 +118,13 @@ public class PowderRoomScreen extends Screen {
     // プレビュー用の下着設定（現在選択中のもの）
     private UnderwearSetting previewUnderwear = UnderwearSetting.DEFAULT;
     private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
-    private DyeColor selectedColor = DyeColor.WHITE;
+    private int selectedColor = 0xFF000000;
 
     private TailorTextureCompositor previewCompositor;
     private boolean hasUnsavedChanges = false;
+
+    private static final int FACE_LINE_COLOR  = 0x3300DDFF;
+    private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
     public PowderRoomScreen() {
         super(Component.translatable("gui.tailormade.powder_room"));
@@ -156,7 +169,10 @@ public class PowderRoomScreen extends Screen {
 
         // パレット
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
+        hueBar.setH(32);
+        hueBar.init();
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
         colorPicker.init();
 
         // RGB EditBox
@@ -238,6 +254,7 @@ public class PowderRoomScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBg(g, partialTick, mouseX, mouseY);
         palette.render(g, mouseX, mouseY);
+        hueBar.render(g, mouseX, mouseY);
         colorPicker.render(g, mouseX, mouseY);
 
         renderEditor(g, mouseX, mouseY);
@@ -282,11 +299,17 @@ public class PowderRoomScreen extends Screen {
     private void renderEditor(GuiGraphics g, int mouseX, int mouseY) {
         if (canvas == null) return;
 
-        float scale  = Math.min((float) ED_W / 64, (float) ED_H / 64);
+        float scale  = currentScale();
+        int[] rxy    = currentRenderXY();
         int renderW  = (int)(64 * scale);
         int renderH  = (int)(64 * scale);
-        int renderX  = leftPos + ED_X + (ED_W - renderW) / 2;
-        int renderY  = topPos  + ED_Y + (ED_H - renderH) / 2;
+        int renderX  = rxy[0];
+        int renderY  = rxy[1];
+
+        // clipping
+        int clipX = leftPos + ED_X;
+        int clipY = topPos  + ED_Y;
+        g.enableScissor(clipX, clipY, clipX + ED_W, clipY + ED_H);
 
         RenderSystem.enableBlend();
         g.blit(canvas.getTextureLocation(), renderX, renderY, 0, 0, renderW, renderH, renderW, renderH);
@@ -300,6 +323,9 @@ public class PowderRoomScreen extends Screen {
             int hy = renderY + (int)(hoverPx[1] * scale);
             g.fill(hx, hy, hx + (int)scale, hy + (int)scale, 0x55FFFFFF);
         }
+
+        renderFaceGuidelines(g, renderX, renderY, scale);
+        g.disableScissor();
     }
 
     private void drawGrid(GuiGraphics g, int rx, int ry, int rw, int rh, float scale) {
@@ -400,6 +426,10 @@ public class PowderRoomScreen extends Screen {
             }
             return true;
         }
+        if (hueBar.mousePressed(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
+            return true;
+        }
         if (colorPicker.mousePressed(mx, my)) {
             int picked = colorPicker.getSelectedColor();
             palette.setRgb(
@@ -408,6 +438,11 @@ public class PowderRoomScreen extends Screen {
                     picked        & 0xFF
             );
             syncRgbBoxes();
+            return true;
+        }
+        if (button == 1 && inEditorArea(mx, my) && zoomScale > 1.0f) {
+            rightDragStartX = mx;
+            rightDragStartY = my;
             return true;
         }
         if (button == 0 && inEditorArea(mx, my)) {
@@ -464,6 +499,21 @@ public class PowderRoomScreen extends Screen {
             dragStartY = my;
             return true;
         }
+        if (button == 1 && rightDragStartX >= 0 && canvas != null) {
+            panOffsetX += (float)(mx - rightDragStartX);
+            panOffsetY += (float)(my - rightDragStartY);
+            rightDragStartX = mx;
+            rightDragStartY = my;
+            return true;
+        }
+        if (hueBar.mouseDragged(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
+            // パレットにも反映
+            int base = hueBar.getSelectedBaseColor();
+            palette.setRgb((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF);
+            syncRgbBoxes();
+            return true;
+        }
         if (colorPicker.mouseDragged(mx, my)) {
             int picked = colorPicker.getSelectedColor();
             palette.setRgb(
@@ -478,9 +528,39 @@ public class PowderRoomScreen extends Screen {
     }
 
     @Override
+    public boolean mouseScrolled(double mx, double my, double dx, double dy) {
+        if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
+
+        float oldScale    = currentScale();
+        float minZoom     = 1.0f;  // fitScale 相当が縮小限界
+        float newZoom     = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
+
+        // ズーム限界（16x16 が表示できる程度）
+        float maxZoom     = Math.min(ED_W, ED_H) / 16.0f / fitScale();
+        newZoom           = Math.min(newZoom, maxZoom);
+
+        float newScale    = fitScale() * newZoom;
+        float scaleDelta  = newScale / oldScale;
+
+        // マウス位置を中心に拡縮
+        int[] rxy = currentRenderXY();
+        panOffsetX = (float)(mx - (mx - rxy[0]) * scaleDelta - (leftPos + ED_X + (ED_W - canvas.getWidth() * newScale) / 2));
+        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos  + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
+
+        zoomScale = newZoom;
+
+        // 縮小限界ではオフセットをリセット
+        if (zoomScale <= 1.0f) { panOffsetX = 0; panOffsetY = 0; }
+
+        return true;
+    }
+
+    @Override
     public boolean mouseReleased(double mx, double my, int button) {
         if (button == 0) { dragStartX = -1; dragStartY = -1; }
+        if (button == 1) { rightDragStartX = -1; rightDragStartY = -1; }
         clickedArea = null;
+        hueBar.mouseReleased();
         colorPicker.mouseReleased();
         return super.mouseReleased(mx, my, button);
     }
@@ -525,11 +605,10 @@ public class PowderRoomScreen extends Screen {
     // ---- ブラシ -----------------------------------------------
 
     private void applyBrush(double mx, double my) {
-        float scale  = Math.min((float) ED_W / 64, (float) ED_H / 64);
-        int renderW  = (int)(64 * scale);
-        int renderH  = (int)(64 * scale);
-        int renderX  = leftPos + ED_X + (ED_W - renderW) / 2;
-        int renderY  = topPos  + ED_Y + (ED_H - renderH) / 2;
+        float scale  = currentScale();
+        int[] rxy    = currentRenderXY();
+        int renderX  = rxy[0];
+        int renderY  = rxy[1];
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
 
@@ -580,6 +659,27 @@ public class PowderRoomScreen extends Screen {
     }
 
     // ---- ユーティリティ ----------------------------------------
+
+    private float fitScale() {
+        if (canvas == null) return 1.0f;
+        return Math.min((float) ED_W / canvas.getWidth(), (float) ED_H / canvas.getHeight());
+    }
+
+    private float currentScale() {
+        return fitScale() * zoomScale;
+    }
+
+    private int[] currentRenderXY() {
+        float scale  = currentScale();
+        int renderW  = (int)(canvas.getWidth()  * scale);
+        int renderH  = (int)(canvas.getHeight() * scale);
+        int baseX    = leftPos + ED_X + (ED_W - renderW) / 2;
+        int baseY    = topPos  + ED_Y + (ED_H - renderH) / 2;
+        return new int[]{
+                (int)(baseX + panOffsetX),
+                (int)(baseY + panOffsetY)
+        };
+    }
 
     private boolean inEditorArea(double mx, double my) {
         return mx >= leftPos + ED_X && mx < leftPos + ED_X + ED_W
@@ -643,10 +743,76 @@ public class PowderRoomScreen extends Screen {
     public void removed() {
         if (canvas != null) canvas.close();
         if (previewCompositor != null) previewCompositor.close();
+        if (hueBar != null) hueBar.close();
         if (colorPicker != null) colorPicker.close();
         super.removed();
     }
 
     @Override
     public boolean isPauseScreen() { return false; }
+
+    private void renderFaceGuidelines(GuiGraphics g, int renderX, int renderY, float scale) {
+        if (canvas == null) return;
+        List<FaceRegion> regions = getFaceRegions();
+
+        for (FaceRegion r : regions) {
+            int sx = renderX + (int)(r.cx * scale);
+            int sy = renderY + (int)(r.cy * scale);
+            int sw = (int)(r.cw * scale);
+            int sh = (int)(r.ch * scale);
+
+            // 枠線（4辺）
+            g.fill(sx,      sy,      sx + sw, sy + 1,      FACE_LINE_COLOR);
+            g.fill(sx,      sy + sh, sx + sw, sy + sh + 1, FACE_LINE_COLOR);
+            g.fill(sx,      sy,      sx + 1,  sy + sh,     FACE_LINE_COLOR);
+            g.fill(sx + sw, sy,      sx + sw + 1, sy + sh, FACE_LINE_COLOR);
+
+            // ラベル（領域が十分広いときだけ表示）
+            if (sw >= 16 && sh >= 8) {
+                g.drawString(font, r.label, sx + 2, sy + 2, FACE_LABEL_COLOR, false);
+            }
+        }
+    }
+
+    private record FaceRegion(int cx, int cy, int cw, int ch, String label) {}
+
+    private List<FaceRegion> getFaceRegions() {
+        return List.of(
+                    // 胴体スキン
+                    new FaceRegion(20,  16,  8,  4, "Body Top"),
+                    new FaceRegion(28,  16,  8,  4, "Body Bot"),
+                    new FaceRegion(16,  20,  4, 12, "Body R"),
+                    new FaceRegion(20,  20,  8, 12, "Body Front"),
+                    new FaceRegion(28,  20,  4, 12, "Body L"),
+                    new FaceRegion(32,  20,  8, 12, "Body Back"),
+                    // 右腕スキン
+                    new FaceRegion(44,  16,  4,  4, "R Arm Top"),
+                    new FaceRegion(48,  16,  4,  4, "R Arm Bot"),
+                    new FaceRegion(40,  20,  4, 12, "R Arm R"),
+                    new FaceRegion(44,  20,  4, 12, "R Arm Front"),
+                    new FaceRegion(48,  20,  4, 12, "R Arm L"),
+                    new FaceRegion(52,  20,  4, 12, "R Arm Back"),
+                    // 左腕スキン
+                    new FaceRegion(36,  48,  4,  4, "L Arm Top"),
+                    new FaceRegion(40,  48,  4,  4, "L Arm Bot"),
+                    new FaceRegion(32,  52,  4, 12, "L Arm R"),
+                    new FaceRegion(36,  52,  4, 12, "L Arm Front"),
+                    new FaceRegion(40,  52,  4, 12, "L Arm L"),
+                    new FaceRegion(44,  52,  4, 12, "L Arm Back"),
+                    // 右足スキン
+                    new FaceRegion( 4,  16,  4,  4, "R Leg Top"),
+                    new FaceRegion( 8,  16,  4,  4, "R Leg Bot"),
+                    new FaceRegion( 0,  20,  4, 12, "R Leg R"),
+                    new FaceRegion( 4,  20,  4, 12, "R Leg Front"),
+                    new FaceRegion( 8,  20,  4, 12, "R Leg L"),
+                    new FaceRegion(12,  20,  4, 12, "R Leg Back"),
+                    // 左足スキン
+                    new FaceRegion(20,  48,  4,  4, "L Leg Top"),
+                    new FaceRegion(24,  48,  4,  4, "L Leg Bot"),
+                    new FaceRegion(16,  52,  4, 12, "L Leg R"),
+                    new FaceRegion(20,  52,  4, 12, "L Leg Front"),
+                    new FaceRegion(24,  52,  4, 12, "L Leg L"),
+                    new FaceRegion(28,  52,  4, 12, "L Leg Back")
+        );
+    }
 }

@@ -26,12 +26,23 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
 
     private static ResourceLocation skinPreviewOverride = null;
     private static UnderwearSetting underwearPreviewOverride = null;
+    private static ResourceLocation underwearPreviewTexture = null;
 
     public static void setSkinPreview(ResourceLocation tex) { skinPreviewOverride = tex; }
-    public static void setUnderwearPreview(UnderwearSetting s) { underwearPreviewOverride = s; }
+    public static void setUnderwearPreview(UnderwearSetting s) {
+//        System.out.println("[CHECK][setUnderwearPreview] PATTERN 1");
+        underwearPreviewOverride = s;
+        underwearPreviewTexture  = null;
+    }
+    public static void setUnderwearPreview(UnderwearSetting s, ResourceLocation texture) {
+//        System.out.println("[CHECK][setUnderwearPreview] PATTERN 2 " + texture);
+        underwearPreviewOverride = s;
+        underwearPreviewTexture  = texture;
+    }
     public static void clearPreview() {
         skinPreviewOverride = null;
         underwearPreviewOverride = null;
+        underwearPreviewTexture  = null;
     }
 
     public static void invalidateSkin(UUID uuid) {
@@ -89,9 +100,8 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
             );
         }
 
-        UnderwearSetting underwear = resolveUnderwear(player);
-        if (underwear != null) {
-            ResourceLocation underwearTex = underwear.type().getTexture();
+        ResourceLocation underwearTex = resolveUnderwearTexture(player);
+        if (underwearTex != null) {
             getParentModel().renderToBuffer(
                     poseStack,
                     bufferSource.getBuffer(RenderType.entityTranslucentCull(underwearTex)),
@@ -156,6 +166,18 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
         if (underwearPreviewOverride != null) return underwearPreviewOverride;
         return UnderwearDataClientCache.get(player.getUUID());
 //        return UNDERWEAR_CACHE.get(player.getUUID());
+    }
+
+    private ResourceLocation resolveUnderwearTexture(AbstractClientPlayer player) {
+        if (underwearPreviewOverride != null) {
+            // プレビュー中：動的テクスチャがあればそちらを優先
+            if (underwearPreviewTexture != null) return underwearPreviewTexture;
+//            System.out.println("[CHECK][resolveUnderwearTexture] " + underwearPreviewTexture + ", " + underwearPreviewOverride);
+            return underwearPreviewOverride.type().getTexture();
+        }
+        UnderwearSetting setting = UnderwearDataClientCache.get(player.getUUID());
+        if (setting == null) return null;
+        return setting.type().getTexture();
     }
 
     private boolean hasTailorArmor(AbstractClientPlayer player) {
