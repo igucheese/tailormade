@@ -6,7 +6,9 @@ import com.tailormade.tailor.data.PixelData;
 import com.tailormade.tailor.data.SkinDataClientCache;
 import com.tailormade.tailor.data.UnderwearDataClientCache;
 import com.tailormade.tailor.data.UnderwearSetting;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -21,11 +23,11 @@ public record SyncUnderwarePayload (UUID uuid, UnderwearSetting setting) impleme
             ResourceLocation.fromNamespaceAndPath(MODID, "sync_underwear");
     public static final Type<SyncUnderwarePayload> TYPE = new Type<>(ID);
 
-    public static final StreamCodec<FriendlyByteBuf, SyncUnderwarePayload> STREAM_CODEC =
-            StreamCodec.of(
-                    (buf, p) -> { buf.writeUUID(p.uuid()); UnderwearSetting.STREAM_CODEC.encode(buf, p.setting()); },
-                    buf -> new SyncUnderwarePayload(buf.readUUID(), UnderwearSetting.STREAM_CODEC.decode(buf))
-            );
+    public static final StreamCodec<FriendlyByteBuf, SyncUnderwarePayload> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, SyncUnderwarePayload::uuid,
+            UnderwearSetting.STREAM_CODEC, SyncUnderwarePayload::setting,
+            SyncUnderwarePayload::new
+    );
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 

@@ -85,17 +85,16 @@ public class WardrobeSavedData extends SavedData {
             CompoundTag nbt = new CompoundTag();
             nbt.putUUID("uuid", uuid);
             nbt.putString("type", settings.type().name());
-            nbt.putString("color", settings.color().getName());
+            nbt.putInt("color", settings.color());
             return nbt;
         }
 
         public static UnderwearRecord load(CompoundTag nbt) {
             UUID uuid = nbt.getUUID("uuid");
             String type = nbt.getString("type");
-            String color = nbt.getString("color");
-            UnderwearType uwType  = UnderwearType.valueOf(type);
-            DyeColor uwColor = DyeColor.byName(color, DyeColor.WHITE);
-            UnderwearSetting setting = new UnderwearSetting(uwType, uwColor);
+            int color = nbt.getInt("color");
+            UnderwearType uwType  = UnderwearType.getType(type);
+            UnderwearSetting setting = new UnderwearSetting(uwType, color);
             return new UnderwearRecord(uuid, setting);
         }
 

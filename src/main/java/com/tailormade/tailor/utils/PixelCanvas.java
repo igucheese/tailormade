@@ -101,7 +101,6 @@ public class PixelCanvas {
         int x = i % width;
         int y = (i - x) / width;
         int[] coords = {x, y};
-        System.out.println("[CHECK][convertIndexToXY] " + i + " is " + Arrays.toString(coords));
         return coords;
     }
 

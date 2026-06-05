@@ -3,6 +3,7 @@ package com.tailormade.tailor.client.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
+import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
@@ -106,6 +107,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final int RGB_BOX_H = 10;
 
     private ColorPickerWidget colorPicker;
+    private HueBarWidget hueBar;
+
+    // ズーム・パン
+    private float zoomScale = 1.0f;
+    private float panOffsetX = 0f;
+    private float panOffsetY = 0f;
+    private double rightDragStartX = -1;
+    private double rightDragStartY = -1;
 
     // ---- フィールド -------------------------------------------
 
@@ -136,6 +145,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private ItemStack lastPatternStack = ItemStack.EMPTY;
     private TailorTextureCompositor previewCompositor;
+
+    private static final int FACE_LINE_COLOR  = 0x3300DDFF;
+    private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
     // ---- コンストラクタ ----------------------------------------
 
@@ -173,8 +185,12 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         addRenderableWidget(gBox);
         addRenderableWidget(bBox);
 
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
+        hueBar.setH(32);
+        hueBar.init();
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
         colorPicker.init();
+        colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
         this.nameInput = new EditBox(this.font, leftPos + PV_X + PV_W - 70, topPos  + PV_Y + PV_H - 6, 72, 20, Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.nameInput.setMaxLength(15);
@@ -248,6 +264,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         super.render(g, mouseX, mouseY, partialTick);
 
         palette.render(g, mouseX, mouseY);
+        hueBar.render(g, mouseX, mouseY);
         colorPicker.render(g, mouseX, mouseY);
 
         renderEditor(g, mouseX, mouseY);
@@ -303,13 +320,18 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
 
         // キャンバスをエディタ領域にフィット（アスペクト比維持）
-        float scale   = fitScale();
+        float scale  = currentScale();
+        int[] rxy    = currentRenderXY();
         int renderW   = (int)(canvas.getWidth()  * scale);
         int renderH   = (int)(canvas.getHeight() * scale);
-        int renderX   = leftPos + ED_X + (ED_W - renderW) / 2;
-        int renderY   = topPos  + ED_Y + (ED_H - renderH) / 2;
+        int renderX  = rxy[0];
+        int renderY  = rxy[1];
 
-        // DynamicTexture を描画
+        // clipping
+        int clipX = leftPos + ED_X;
+        int clipY = topPos  + ED_Y;
+        g.enableScissor(clipX, clipY, clipX + ED_W, clipY + ED_H);
+
         RenderSystem.enableBlend();
         g.blit(canvas.getTextureLocation(), renderX, renderY, 0, 0, renderW, renderH, renderW, renderH);
         RenderSystem.disableBlend();
@@ -327,7 +349,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             g.fill(hx, hy, hx + (int)scale, hy + (int)scale, 0x55FFFFFF);
         }
 
+        renderFaceGuidelines(g, renderX, renderY, scale);
         renderSegmentBorders(g, renderX, renderY, scale);
+        g.disableScissor();
     }
 
     private void renderSegmentBorders(GuiGraphics g, int renderX, int renderY, float scale) {
@@ -545,6 +569,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
             return true;
         }
+        if (hueBar.mousePressed(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
+            return true;
+        }
         if (colorPicker.mousePressed(mx, my)) {
             int picked = colorPicker.getSelectedColor();
             palette.setRgb(
@@ -553,6 +581,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                     picked        & 0xFF
             );
             syncRgbBoxesFromPalette();
+            return true;
+        }
+        if (button == 1 && inEditorArea(mx, my) && zoomScale > 1.0f) {
+            rightDragStartX = mx;
+            rightDragStartY = my;
             return true;
         }
         if (canvas != null && inEditorArea(mx, my)) {
@@ -611,6 +644,21 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             dragStartY = my;
             return true;
         }
+        if (button == 1 && rightDragStartX >= 0 && canvas != null) {
+            panOffsetX += (float)(mx - rightDragStartX);
+            panOffsetY += (float)(my - rightDragStartY);
+            rightDragStartX = mx;
+            rightDragStartY = my;
+            return true;
+        }
+        if (hueBar.mouseDragged(mx, my)) {
+            colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
+            // パレットにも反映
+            int base = hueBar.getSelectedBaseColor();
+            palette.setRgb((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF);
+            syncRgbBoxesFromPalette();
+            return true;
+        }
         if (colorPicker.mouseDragged(mx, my)) {
             int picked = colorPicker.getSelectedColor();
             palette.setRgb(
@@ -622,6 +670,34 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return true;
         }
         return super.mouseDragged(mx, my, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double dx, double dy) {
+        if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
+
+        float oldScale    = currentScale();
+        float minZoom     = 1.0f;  // fitScale 相当が縮小限界
+        float newZoom     = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
+
+        // ズーム限界（16x16 が表示できる程度）
+        float maxZoom     = Math.min(ED_W, ED_H) / 16.0f / fitScale();
+        newZoom           = Math.min(newZoom, maxZoom);
+
+        float newScale    = fitScale() * newZoom;
+        float scaleDelta  = newScale / oldScale;
+
+        // マウス位置を中心に拡縮
+        int[] rxy = currentRenderXY();
+        panOffsetX = (float)(mx - (mx - rxy[0]) * scaleDelta - (leftPos + ED_X + (ED_W - canvas.getWidth() * newScale) / 2));
+        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos  + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
+
+        zoomScale = newZoom;
+
+        // 縮小限界ではオフセットをリセット
+        if (zoomScale <= 1.0f) { panOffsetX = 0; panOffsetY = 0; }
+
+        return true;
     }
 
     @Override
@@ -682,7 +758,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             dragStartX = -1;
             dragStartY = -1;
         }
+        if (button == 1) { rightDragStartX = -1; rightDragStartY = -1; }
         clickedArea = null;
+        hueBar.mouseReleased();
         colorPicker.mouseReleased();
         return super.mouseReleased(mx, my, button);
     }
@@ -708,11 +786,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private void applyBrush(double mx, double my) {
         if (canvas == null) return;
-        float scale  = fitScale();
-        int renderW  = (int)(canvas.getWidth()  * scale);
-        int renderH  = (int)(canvas.getHeight() * scale);
-        int renderX  = leftPos + ED_X + (ED_W - renderW) / 2;
-        int renderY  = topPos  + ED_Y + (ED_H - renderH) / 2;
+        float scale  = currentScale();
+        int[] rxy    = currentRenderXY();
+        int renderX  = rxy[0];
+        int renderY  = rxy[1];
 
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
@@ -755,6 +832,22 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private float fitScale() {
         if (canvas == null) return 1.0f;
         return Math.min((float) ED_W / canvas.getWidth(), (float) ED_H / canvas.getHeight());
+    }
+
+    private float currentScale() {
+        return fitScale() * zoomScale;
+    }
+
+    private int[] currentRenderXY() {
+        float scale  = currentScale();
+        int renderW  = (int)(canvas.getWidth()  * scale);
+        int renderH  = (int)(canvas.getHeight() * scale);
+        int baseX    = leftPos + ED_X + (ED_W - renderW) / 2;
+        int baseY    = topPos  + ED_Y + (ED_H - renderH) / 2;
+        return new int[]{
+                (int)(baseX + panOffsetX),
+                (int)(baseY + panOffsetY)
+        };
     }
 
     private boolean inEditorArea(double mx, double my) {
@@ -827,6 +920,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     public void removed() {
         if (canvas != null) canvas.close();
         if (previewCompositor != null) previewCompositor.close();
+        if (hueBar != null) hueBar.close();
         if (colorPicker != null) colorPicker.close();
         super.removed();
     }
@@ -841,5 +935,29 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private void renderFaceGuidelines(GuiGraphics g, int renderX, int renderY, float scale) {
+        if (canvas == null) return;
+        ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
+        if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) return;
+
+        PatternType type = patternItem.getPatternType(mainStack);
+
+        for (PatternType.FaceSegment r : type.getFaceSegments()) {
+            int sx = renderX + (int)(r.canvasX() * scale);
+            int sy = renderY + (int)(r.canvasY() * scale);
+            int sw = (int)(r.w() * scale);
+            int sh = (int)(r.h() * scale);
+
+            g.fill(sx, sy, sx + sw, sy + 1, FACE_LINE_COLOR);
+            g.fill(sx, sy + sh, sx + sw, sy + sh + 1, FACE_LINE_COLOR);
+            g.fill(sx, sy, sx + 1, sy + sh, FACE_LINE_COLOR);
+            g.fill(sx + sw, sy, sx + sw + 1, sy + sh, FACE_LINE_COLOR);
+
+            if (sw >= 16 && sh >= 8) {
+                g.drawString(font, r.label(), sx + 2, sy + 2, FACE_LABEL_COLOR, false);
+            }
+        }
     }
 }
