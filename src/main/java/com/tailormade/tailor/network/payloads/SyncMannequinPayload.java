@@ -50,8 +50,6 @@ public record SyncMannequinPayload(
 
             EquipmentSlot slot = EquipmentSlot.values()[payload.slotOrdinal()];
 
-            // setItemSlot を直接呼ぶと再帰でパケットを送ろうとするので、
-            // フィールドに直接セット
             switch (slot) {
                 case FEET     -> mannequin.armorItems.set(0, payload.stack());
                 case LEGS     -> mannequin.armorItems.set(1, payload.stack());

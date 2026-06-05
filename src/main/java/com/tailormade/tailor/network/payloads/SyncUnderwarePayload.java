@@ -32,8 +32,6 @@ public record SyncUnderwarePayload (UUID uuid, UnderwearSetting setting) impleme
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public static void handle(SyncUnderwarePayload packet, IPayloadContext ctx) {
-//        ctx.enqueueWork(() ->
-//                SkinLayerRenderLayer.updateUnderwear(packet.uuid(), packet.setting()));
         ctx.enqueueWork(() -> {
             UnderwearDataClientCache.updateCache(packet.uuid(), packet.setting());
             Tailormade.LOGGER.info("[CACHE_SYNC_UNDERWEAR] Sync completed: " + packet.uuid() + " body: " + packet.setting());

@@ -14,12 +14,6 @@ import java.util.Deque;
 import static com.tailormade.tailor.data.Constants.DEFAULT_COLOR;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
-/**
- * ドットエディタのピクセルデータ管理と DynamicTexture 更新を担う。
- *
- * 内部は ARGB (0xAARRGGBB) で保持。
- * NativeImage は ABGR (0xAABBGGRR) 形式なので、upload時に変換する。
- */
 public class PixelCanvas {
 
     public static final int TRANSPARENT  = 0x00000000;
@@ -29,11 +23,9 @@ public class PixelCanvas {
 
     private final int width;
     private final int height;
-    private final int[] pixels; // 現在の状態 (ARGB)
+    private final int[] pixels;
 
-    // Undo スタック: snapshot() を呼ぶたびに現在状態をプッシュ
     private final Deque<int[]> undoStack = new ArrayDeque<>();
-    // Redo スタック: undo() 時に現在状態をプッシュ、新規描画時にクリア
     private final Deque<int[]> redoStack = new ArrayDeque<>();
 
     private DynamicTexture dynamicTexture;
@@ -57,8 +49,6 @@ public class PixelCanvas {
         uploadAll();
         undoStack.push(pixels.clone());
     }
-
-    // ---- ピクセル操作 ----------------------------------------
 
     public void setPixel(int x, int y, int argbColor, int brushSize) {
         if (!inBounds(x, y)) return;
@@ -112,41 +102,25 @@ public class PixelCanvas {
     public void erase(int x, int y, int brushSize) {
         setPixel(x, y, TRANSPARENT, brushSize);
     }
-
     private boolean inBounds(int x, int y) {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
-
     public void setIsSkin(boolean isSkin) {
         this.isSkin = isSkin;
     }
 
-    // ---- Undo / Redo -----------------------------------------
-
-    /**
-     * 現在の状態を Undo スタックに積む。
-     * DesignerScreen の mouseReleased() から呼ぶ（ストローク確定時）。
-     * Redo スタックはクリアする。
-     */
     public void snapshot() {
         if (undoStack.size() >= HISTORY_MAX) undoStack.pollLast();
         undoStack.push(pixels.clone());
         redoStack.clear();
     }
 
-    /**
-     * Undo: 1つ前の状態に戻す。
-     * 現在状態を Redo スタックに退避してから復元する。
-     */
     public void undo() {
         if (undoStack.isEmpty()) return;
         redoStack.push(pixels.clone());
         restore(undoStack.pop());
     }
 
-    /**
-     * Redo: undo した操作をやり直す。
-     */
     public void redo() {
         if (redoStack.isEmpty()) return;
         undoStack.push(pixels.clone());
@@ -160,8 +134,6 @@ public class PixelCanvas {
 
     public boolean canUndo() { return !undoStack.isEmpty(); }
     public boolean canRedo() { return !redoStack.isEmpty(); }
-
-    // ---- DynamicTexture 更新 ---------------------------------
 
     public void uploadIfDirty() {
         if (dirty) { uploadAll(); dirty = false; }
@@ -183,8 +155,6 @@ public class PixelCanvas {
         dynamicTexture.upload();
     }
 
-    // ---- データ入出力 ----------------------------------------
-
     public int[] getPixels() { return pixels.clone(); }
     public void loadPixels(int[] data) {
         if (data == null || data.length != pixels.length) return;
@@ -193,8 +163,6 @@ public class PixelCanvas {
         redoStack.clear();
         dirty = true;
     }
-
-    // ---- Getters / Lifecycle ---------------------------------
 
     public ResourceLocation getTextureLocation() { return textureLocation; }
     public int getWidth()  { return width; }

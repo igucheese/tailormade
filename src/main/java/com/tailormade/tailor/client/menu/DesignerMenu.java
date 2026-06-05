@@ -28,11 +28,9 @@ public class DesignerMenu extends AbstractContainerMenu {
         }
     };
 
-    // Client
     public DesignerMenu(int windowId, Inventory playerInv, FriendlyByteBuf buf) {
         this(windowId, playerInv);
     }
-    // Server
     public DesignerMenu(int windowId, Inventory playerInv) {
         super(ModMenuTypes.DESIGNER_MENU.get(), windowId);
         addPatternSlots();

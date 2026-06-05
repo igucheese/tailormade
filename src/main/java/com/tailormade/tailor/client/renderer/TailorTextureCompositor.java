@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class TailorTextureCompositor {
-
     private static final int SKIN_W = 64;
     private static final int SKIN_H = 64;
 
@@ -30,19 +29,7 @@ public class TailorTextureCompositor {
     private ResourceLocation textureLocation;
     private int lastHash = -1;
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
-
-    /**
-     * 前回の getOrUpdate() がデータありで終わったか。
-     *
-     * hash == lastHash のキャッシュヒット時に
-     * 「データなし」を正しく null で返すために必要。
-     *
-     * これがないと、装備を外した後も lastHash が一致し続け
-     * 古い textureLocation を返し続けてしまう。
-     */
     private boolean hasData = false;
-
-    // ---- キャッシュ管理 ---------------------------------------
 
     public static TailorTextureCompositor getOrCreate(UUID uuid) {
         return CACHE.computeIfAbsent(uuid, k -> new TailorTextureCompositor());
@@ -57,8 +44,6 @@ public class TailorTextureCompositor {
         return new TailorTextureCompositor();
     }
 
-    // ---- 初期化 -----------------------------------------------
-
     private TailorTextureCompositor() {
         dynamicTexture  = new DynamicTexture(SKIN_W, SKIN_H, true);
         String textureName = "tailor_composite_" + COUNTER.getAndIncrement();
@@ -67,17 +52,13 @@ public class TailorTextureCompositor {
                 .register(textureName, dynamicTexture);
     }
 
-    // ---- エンティティの装備から合成 ----------------------------
-
     public ResourceLocation getOrUpdate(LivingEntity entity) {
         int hash = equipmentHash(entity);
 
         if (hash == lastHash) {
-            // キャッシュヒット: 前回の結果（データあり/なし）をそのまま返す
             return hasData ? textureLocation : null;
         }
 
-        // ハッシュ変化 → 再評価
         Map<PatternType, int[]> pixelMap = collectPixelData(entity);
         lastHash = hash;
 
@@ -97,13 +78,9 @@ public class TailorTextureCompositor {
         return textureLocation;
     }
 
-    // ---- 内部処理 ---------------------------------------------
-
     private Map<PatternType, int[]> collectPixelData(LivingEntity entity) {
         Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             ItemStack stack = entity.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
             PixelData pd = getPixelDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
@@ -111,7 +88,6 @@ public class TailorTextureCompositor {
             PatternType type = equipmentSlotToPatternType(slot);
             if (type != null) map.put(type, pd.pixels());
         }
-        System.out.println("[Mannequin] pixelMap.keys=" + map.keySet());
         return map;
     }
 
@@ -155,9 +131,7 @@ public class TailorTextureCompositor {
 
     private static int equipmentHash(LivingEntity entity) {
         int hash = 0;
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             hash = hash * 31 + entity.getItemBySlot(slot).hashCode();
         }
         return hash;

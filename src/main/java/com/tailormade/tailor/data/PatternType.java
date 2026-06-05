@@ -1,7 +1,6 @@
 package com.tailormade.tailor.data;
 
 public enum PatternType {
-
     HEAD(
         new CanvasSegment[]{
                 new CanvasSegment(0, 0, 32, 0, 32, 16)
@@ -138,13 +137,18 @@ public enum PatternType {
     );
 
     public record CanvasSegment(
-        int canvasX, int canvasY,  // キャンバス上の配置位置
-        int uvX,     int uvY,      // スキンテクスチャ上の対応座標
-        int w,       int h         // 領域サイズ
+        int canvasX,
+        int canvasY,
+        int uvX,
+        int uvY,
+        int w,
+        int h
     ) {}
     public record FaceSegment(
-        int canvasX, int canvasY,
-        int w,       int h,
+        int canvasX,
+        int canvasY,
+        int w,
+        int h,
         String label
     ) {}
 
@@ -173,7 +177,6 @@ public enum PatternType {
     public int getCanvasH() { return canvasH; }
     public String getType() { return type; }
 
-    /** 後方互換 */
     public int getTexW()          { return canvasW; }
     public int getTexH()          { return canvasH; }
     public int getUvX()           { return segments[0].uvX(); }

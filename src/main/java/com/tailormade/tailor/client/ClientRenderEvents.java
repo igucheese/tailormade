@@ -25,24 +25,11 @@ import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import java.util.List;
 
 public class ClientRenderEvents {
-    /**
-     * @param modEventBus  MOD イベントバス（EntityRenderersEvent を受け取る）
-     * @param forgeBus     NeoForge グローバルイベントバス（RenderLivingEvent 等を受け取る）
-     */
     public static void register(IEventBus modEventBus, IEventBus forgeBus) {
         modEventBus.addListener(ClientRenderEvents::onAddLayers);
-//        forgeBus.addListener(ClientRenderEvents::onRenderLivingPre);
         forgeBus.addListener(ClientRenderEvents::onEquipmentChange);
         modEventBus.addListener(ClientRenderEvents::onRegisterLayerDefinitions);
         modEventBus.addListener(ClientRenderEvents::onRegisterRenderers);
-    }
-
-    public static void registerModBus(IEventBus modBus) {
-        modBus.addListener(ClientRenderEvents::onAddLayers);
-    }
-
-    public static void registerForgeBus(IEventBus forgeBus) {
-        forgeBus.addListener(ClientRenderEvents::onEquipmentChange);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

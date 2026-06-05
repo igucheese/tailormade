@@ -38,7 +38,6 @@ import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
 public class PowderRoomScreen extends Screen {
-
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/powder_room_gui.png");
     private static final ResourceLocation BRUSH_1_ICON =
@@ -57,23 +56,19 @@ public class PowderRoomScreen extends Screen {
     private static final int GUI_OFFSET_X = 64;
     private static final int GUI_OFFSET_Y = 148;
 
-    // 2D エディタ領域
     private static final int ED_X = 28;
     private static final int ED_Y = 6;
     private static final int ED_W = 188;
     private static final int ED_H = 188;
 
-    // プレビュー領域
     private static final int PV_X = 248;
     private static final int PV_Y = 6;
     private static final int PV_W = 124;
     private static final int PV_H = 172;
 
-    // パレット
     private static final int PAL_X = 8;
     private static final int PAL_Y = 10;
 
-    // ツールバー
     private static final int TOOLBAR_X = 223;
     private static final int TOOLBAR_Y = 10;
     private static int BRUSH_SIZE = 1;
@@ -90,13 +85,11 @@ public class PowderRoomScreen extends Screen {
 
     private String clickedArea = null;
 
-    /** 肌色テクスチャ（64×64）を編集するキャンバス */
     private PixelCanvas canvas;
     private ColorPalette palette;
     private ColorPickerWidget colorPicker;
     private HueBarWidget hueBar;
 
-    // ズーム・パン
     private float zoomScale = 1.0f;
     private float panOffsetX = 0f;
     private float panOffsetY = 0f;
@@ -107,7 +100,6 @@ public class PowderRoomScreen extends Screen {
     private Button saveButton;
     private String beforeEyedropperTool = null;
 
-    // プレビュー回転
     private float previewYaw   = 235.0f; // 正面が見える初期値
     private float previewPitch = 0.0f;
     private double lastDragX;
@@ -115,7 +107,6 @@ public class PowderRoomScreen extends Screen {
     private double dragStartX = -1;
     private double dragStartY = -1;
 
-    // プレビュー用の下着設定（現在選択中のもの）
     private UnderwearSetting previewUnderwear = UnderwearSetting.DEFAULT;
     private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
     private int selectedColor = 0xFF000000;
@@ -139,10 +130,8 @@ public class PowderRoomScreen extends Screen {
 
         previewCompositor = TailorTextureCompositor.createForPreview();
 
-        // キャンバス（64×64 = スキン全体）
         canvas = new PixelCanvas(64, 64);
 
-        // 既存の肌色データをロード
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             PixelData existingData = SkinDataClientCache.get(mc.player.getUUID());
@@ -150,7 +139,6 @@ public class PowderRoomScreen extends Screen {
             if (existing != null) {
                 canvas.loadPixels(existing);
             } else {
-                // デフォルト: 頭部スキンから肌色をサンプリングして塗りつぶし
                 fillWithSampledSkinColor(mc.player);
             }
 
@@ -167,7 +155,6 @@ public class PowderRoomScreen extends Screen {
         PowderRoomEditableRegions.lockNonEditablePixels(canvas);
         canvas.setIsSkin(true);
 
-        // パレット
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
         hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
         hueBar.setH(32);
@@ -175,7 +162,6 @@ public class PowderRoomScreen extends Screen {
         colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
         colorPicker.init();
 
-        // RGB EditBox
         int rgbBaseX = leftPos + 14;
         int rgbY     = topPos  + ED_Y + ED_H + RGB_Y_OFFSET;
         rBox = makeRgbBox(rgbBaseX, rgbY, "R");
@@ -188,7 +174,6 @@ public class PowderRoomScreen extends Screen {
         addRenderableWidget(gBox);
         addRenderableWidget(bBox);
 
-        // SAVE ボタン
         int saveX = leftPos + PV_X + PV_W - 63;
         int saveY = topPos  + PV_Y + PV_H + 21;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
@@ -205,15 +190,8 @@ public class PowderRoomScreen extends Screen {
         return box;
     }
 
-    // ---- デフォルト肌色サンプリング ---------------------------
-
-    /**
-     * プレイヤーのスキンテクスチャから顔部分の代表色をサンプリングし、
-     * 全体を塗りつぶす。
-     * スキンが取得できない場合は #C8A882（デフォルト肌色）を使う。
-     */
     private void fillWithSampledSkinColor(net.minecraft.client.player.AbstractClientPlayer player) {
-        int skinColor = 0xFFC8A882; // フォールバック
+        int skinColor = 0xFFC8A882;
 
         try {
             var texture = Minecraft.getInstance()
@@ -221,7 +199,6 @@ public class PowderRoomScreen extends Screen {
                     .getTexture(player.getSkin().texture());
             if (texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dt
                     && dt.getPixels() != null) {
-                // 顔 UV: x=9, y=9 付近の1ピクセル（ABGR → ARGB 変換）
                 int abgr = dt.getPixels().getPixelRGBA(9, 9);
                 int a = (abgr >> 24) & 0xFF;
                 int b = (abgr >> 16) & 0xFF;
@@ -248,8 +225,6 @@ public class PowderRoomScreen extends Screen {
         }
     }
 
-    // ---- 描画 -------------------------------------------------
-
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBg(g, partialTick, mouseX, mouseY);
@@ -271,7 +246,6 @@ public class PowderRoomScreen extends Screen {
     {
         int toolBarX = this.leftPos + TOOLBAR_X;
         int toolBarY = this.topPos + TOOLBAR_Y;
-        // ツールバー
         g.blit(BRUSH_1_ICON, toolBarX, toolBarY, 0, 0, 10, 10, 10, 10);
         g.blit(BRUSH_2_ICON, toolBarX, toolBarY + 13, 0, 0, 10, 10, 10, 10);
         g.blit(BRUSH_3_ICON, toolBarX, toolBarY + 26, 0, 0, 10, 10, 10, 10);
@@ -306,7 +280,6 @@ public class PowderRoomScreen extends Screen {
         int renderX  = rxy[0];
         int renderY  = rxy[1];
 
-        // clipping
         int clipX = leftPos + ED_X;
         int clipY = topPos  + ED_Y;
         g.enableScissor(clipX, clipY, clipX + ED_W, clipY + ED_H);
@@ -344,13 +317,8 @@ public class PowderRoomScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        // 肌色テクスチャを全部位で合成してプレビューセット
         if (canvas != null) {
             Map<PatternType, int[]> pixelMap = buildPreviewPixelMap();
-//            int[] pixels = canvas.getPixels();
-//            for (PatternType type : PatternType.values()) {
-//                pixelMap.put(type, cropPixels(pixels, type));
-//            }
             ResourceLocation skinTex = previewCompositor.composeForPreview(pixelMap);
             SkinLayerRenderLayer.setSkinPreview(skinTex);
         }
@@ -413,8 +381,6 @@ public class PowderRoomScreen extends Screen {
         gBox.render(g, mx, my, partialTick);
         bBox.render(g, mx, my, partialTick);
     }
-
-    // ---- マウスイベント ----------------------------------------
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
@@ -531,18 +497,16 @@ public class PowderRoomScreen extends Screen {
     public boolean mouseScrolled(double mx, double my, double dx, double dy) {
         if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
 
-        float oldScale    = currentScale();
-        float minZoom     = 1.0f;  // fitScale 相当が縮小限界
-        float newZoom     = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
+        float oldScale = currentScale();
+        float minZoom = 1.0f;  // fitScale 相当が縮小限界
+        float newZoom = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
 
-        // ズーム限界（16x16 が表示できる程度）
-        float maxZoom     = Math.min(ED_W, ED_H) / 16.0f / fitScale();
-        newZoom           = Math.min(newZoom, maxZoom);
+        float maxZoom = Math.min(ED_W, ED_H) / 16.0f / fitScale();
+        newZoom = Math.min(newZoom, maxZoom);
 
-        float newScale    = fitScale() * newZoom;
+        float newScale = fitScale() * newZoom;
         float scaleDelta  = newScale / oldScale;
 
-        // マウス位置を中心に拡縮
         int[] rxy = currentRenderXY();
         panOffsetX = (float)(mx - (mx - rxy[0]) * scaleDelta - (leftPos + ED_X + (ED_W - canvas.getWidth() * newScale) / 2));
         panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos  + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
@@ -602,8 +566,6 @@ public class PowderRoomScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    // ---- ブラシ -----------------------------------------------
-
     private void applyBrush(double mx, double my) {
         float scale  = currentScale();
         int[] rxy    = currentRenderXY();
@@ -630,7 +592,6 @@ public class PowderRoomScreen extends Screen {
             }
         } else {
             if (TOOL_MODE == "bucket") {
-                // 塗りつぶし
                 canvas.fill(palette.getSelectedColor());
             } else {
                 canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
@@ -649,16 +610,12 @@ public class PowderRoomScreen extends Screen {
         return false;
     }
 
-    // ---- SAVE -------------------------------------------------
-
     private void onSave() {
         if (canvas == null) return;
         PacketDistributor.sendToServer(new SaveSkinLayerPayload(canvas.getPixels()));
         hasUnsavedChanges = false;
         onClose();
     }
-
-    // ---- ユーティリティ ----------------------------------------
 
     private float fitScale() {
         if (canvas == null) return 1.0f;
@@ -736,7 +693,6 @@ public class PowderRoomScreen extends Screen {
         rBox.setValue(String.valueOf(r));
         gBox.setValue(String.valueOf(g));
         bBox.setValue(String.valueOf(b));
-        System.out.println("[CHECK][syncRgbBoxesFromPalette] R: " + r + " G:" + g + " B:" + b);
     }
 
     @Override
@@ -767,7 +723,6 @@ public class PowderRoomScreen extends Screen {
             g.fill(sx,      sy,      sx + 1,  sy + sh,     FACE_LINE_COLOR);
             g.fill(sx + sw, sy,      sx + sw + 1, sy + sh, FACE_LINE_COLOR);
 
-            // ラベル（領域が十分広いときだけ表示）
             if (sw >= 16 && sh >= 8) {
                 g.drawString(font, r.label, sx + 2, sy + 2, FACE_LABEL_COLOR, false);
             }

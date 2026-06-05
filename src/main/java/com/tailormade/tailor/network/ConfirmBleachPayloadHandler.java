@@ -22,33 +22,30 @@ public class ConfirmBleachPayloadHandler {
     private static void handleOnMainThread(ConfirmBleachPayload packet, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer player)) return;
         if (!(player.containerMenu instanceof BleachMenu menu)) {
-            logWarn(player, "BleachMenu を開いていない");
+            logWarn(player, "BleachMenu が開かれていません！");
             return;
         }
 
         ItemStack armorStack = menu.getSlot(BleachMenu.SLOT_ARMOR).getItem();
         if (armorStack.isEmpty() || !(armorStack.getItem() instanceof ArmorItem armorItem)) {
-            logWarn(player, "防具スロットに ArmorItem がない");
+            logWarn(player, "防具スロットに ArmorItem がありません！");
             return;
         }
 
         ItemStack bleachStack = menu.getSlot(BleachMenu.SLOT_BLEACH).getItem();
         if (bleachStack.isEmpty() || !bleachStack.is(ModItems.BLEACH.get())) {
-            logWarn(player, "漂白剤がない");
+            logWarn(player, "漂白剤がありません！");
             return;
         }
 
-        // 防具からデータ削除
         armorStack.remove(ModDataComponents.PATTERN_ID.get());
         armorStack.remove(DataComponents.CUSTOM_NAME);
         armorStack.remove(DataComponents.LORE);
 
-        // 漂白剤を消費
         bleachStack.shrink(1);
         SimpleContainer container = menu.getSlotContainer();
         container.setItem(BleachMenu.SLOT_BLEACH, bleachStack.isEmpty() ? ItemStack.EMPTY : bleachStack);
 
-        // できあがった防具をインベに入れる
         menu.getSlot(BleachMenu.SLOT_ARMOR).set(ItemStack.EMPTY);
         if (!player.getInventory().add(armorStack)) {
             player.drop(armorStack, false);
@@ -56,13 +53,12 @@ public class ConfirmBleachPayloadHandler {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);
 
-        // 同期
         player.containerMenu.broadcastChanges();
     }
 
     private static void logWarn(ServerPlayer player, String reason) {
         Tailormade.LOGGER.warn(
-                "ConfirmTailor: {} のリクエストを却下 ({})", player.getName().getString(), reason
+                "ConfirmTailor: {} を処理できませんでした - {}", player.getName().getString(), reason
         );
     }
 }

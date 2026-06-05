@@ -31,18 +31,14 @@ import static com.tailormade.tailor.client.menu.TailorMenu.*;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
-
-    // テクスチャ
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tailor_gui.png");
 
-    // GUI サイズ（テクスチャに合わせて調整）
     private static final int GUI_W = 384;
     private static final int GUI_H = 216;
     private static final int GUI_OFFSET_X = 64;
     private static final int GUI_OFFSET_Y = 148;
 
-    // プレビュー領域（右半分）
     private static final int PV_X = 242;
     private static final int PV_Y = 6;
     private static final int PV_W = 124;
@@ -51,21 +47,15 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
     private EditBox nameInput;
     private EditBox serialInput;
 
-    // 確定ボタン
     private static final int BTN_W = 100;
     private static final int BTN_H = 20;
 
-    // タンクゲージ（各染料スロットの右横）
     private static final int GAUGE_W  = 4;
     private static final int GAUGE_H  = 14;
-    private static final int GAUGE_OX = 20; // スロットX からの相対オフセット
-
-    // ---- フィールド -------------------------------------------
+    private static final int GAUGE_OX = 20;
 
     private Button confirmButton;
     private TailorTextureCompositor previewCompositor;
-
-    // ---- コンストラクタ ----------------------------------------
 
     public TailorScreen(TailorMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
@@ -73,12 +63,9 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         this.imageHeight = GUI_H;
     }
 
-    // ---- 初期化 -----------------------------------------------
-
     @Override
     protected void init() {
         super.init();
-
         previewCompositor = TailorTextureCompositor.createForPreview();
 
         int btnX = leftPos + PV_X + (PV_W - BTN_W) / 2;
@@ -102,14 +89,10 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         addRenderableWidget(confirmButton);
     }
 
-    // ---- 描画 -------------------------------------------------
-
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBackground(g, mouseX, mouseY, partialTick);
         super.render(g, mouseX, mouseY, partialTick);
-
-//        renderDyeGauges(g);
         renderDyeCostHint(g);
         renderPreview(g, mouseX, mouseY);
 
@@ -141,41 +124,12 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         g.drawString(this.font, Component.literal("/" + tankB), SLOT_DYE_B_X + xBuffer, SLOT_DYE_B_Y + 5, 0x444444, false);
     }
 
-    // ---- 染料ゲージ -------------------------------------------
-
-    private void renderDyeGauges(GuiGraphics g) {
-        if (menu.getBlockEntity() == null) return;
-
-        int maxTank = com.tailormade.tailor.entities.blockentities.TailorBlockEntity.TANK_MAX;
-        renderGauge(g, 3, menu.getBlockEntity().getTankR(), maxTank, 0xFFFF4444,
-                leftPos + 62 + GAUGE_OX, topPos + 54);
-        renderGauge(g, 4, menu.getBlockEntity().getTankG(), maxTank, 0xFF44FF44,
-                leftPos + 62 + GAUGE_OX, topPos + 72);
-        renderGauge(g, 5, menu.getBlockEntity().getTankB(), maxTank, 0xFF4444FF,
-                leftPos + 62 + GAUGE_OX, topPos + 90);
-    }
-
-    private void renderGauge(GuiGraphics g, int slotOffset, int current, int max,
-                             int color, int x, int y) {
-        // 背景（黒）
-        g.fill(x, y, x + GAUGE_W, y + GAUGE_H, 0xFF000000);
-        // 充填（下から上）
-        int fillH = (int)((float) current / max * GAUGE_H);
-        if (fillH > 0) {
-            g.fill(x, y + GAUGE_H - fillH, x + GAUGE_W, y + GAUGE_H, color);
-        }
-    }
-
-    // ---- 必要コストのヒント -----------------------------------
-
-    /** 型紙スロットに型紙が入っているとき、必要な染料コストをスロット横に表示 */
     private void renderDyeCostHint(GuiGraphics g) {
         ItemStack patternStack = menu.getSlot(0).getItem();
         DyeCostCalculator.DyeCost cost;
         if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem)) {
             cost = new DyeCostCalculator.DyeCost(0, 0, 0);
         } else {
-//            PixelData pd = patternStack.get(ModDataComponents.PIXEL_DATA.get());
             PixelData pd = getPixelDataFromId(patternStack.get(ModDataComponents.PATTERN_ID.get()));
             if (pd == null) {
                 cost = new DyeCostCalculator.DyeCost(0, 0, 0);
@@ -191,8 +145,6 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         g.drawString(font, String.valueOf(cost.blue()),  hintX, hintYBuffer + SLOT_DYE_B_Y, 0xFF4444FF, false);
     }
 
-    // ---- 3D プレビュー ----------------------------------------
-
     private void renderPreview(GuiGraphics g, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -200,15 +152,12 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         ItemStack patternStack = menu.getSlot(0).getItem();
         ItemStack armorStack   = menu.getSlot(1).getItem();
 
-        // 型紙と防具が両方揃っているときのみプレビュー表示
         if (patternStack.isEmpty() || armorStack.isEmpty()) return;
         if (!(patternStack.getItem() instanceof PatternItem patternItem)) return;
 
-//        PixelData pd = patternStack.get(ModDataComponents.PIXEL_DATA.get());
         PixelData pd = getPixelDataFromId(patternStack.get(ModDataComponents.PATTERN_ID.get()));
         if (pd == null) return;
 
-        // プレビュー用ピクセルマップ構築
         Map<PatternType, int[]> pixelMap = new EnumMap<>(PatternType.class);
         PatternType type = patternItem.getPatternType(patternStack);
         pixelMap.put(type, pd.pixels());
@@ -236,8 +185,6 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         }
     }
 
-    // ---- 確定 -------------------------------------------------
-
     private void onConfirm() {
         if (!menu.canConfirm()) return;
         String name = this.nameInput.getValue();
@@ -245,8 +192,6 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         String playerName = minecraft.player.getName().getString();
         PacketDistributor.sendToServer(new ConfirmTailorPayload(name, serial, playerName));
     }
-
-    // ---- ライフサイクル ----------------------------------------
 
     @Override
     public void removed() {

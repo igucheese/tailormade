@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 public class HueBarWidget {
 
     private static final int W = 16;
-    private int H = 16;  // 後で高さだけ変えやすいよう定数化
+    private int H = 16;
 
     private final int x;
     private final int y;
@@ -65,7 +65,6 @@ public class HueBarWidget {
         g.blit(textureLocation, x, y, 0, 0, W, H, W, H);
         RenderSystem.disableBlend();
 
-        // カーソル（白い横線）
         int cy = y + cursorY;
         g.fill(x, cy, x + W, cy + 1, 0xFFFFFFFF);
     }
@@ -96,7 +95,6 @@ public class HueBarWidget {
         return mx >= x && mx < x + W && my >= y && my < y + H;
     }
 
-    /** 選択中の色相から純色（彩度1・明度1）のARGBを返す */
     public int getSelectedBaseColor() {
         return 0xFF000000 | hsvToRgb(selectedHue, 1f, 1f);
     }
@@ -109,8 +107,6 @@ public class HueBarWidget {
             texture = null;
         }
     }
-
-    // ---- HSV → RGB -------------------------------------------
 
     private static int hsvToRgb(float h, float s, float v) {
         float c  = v * s;
