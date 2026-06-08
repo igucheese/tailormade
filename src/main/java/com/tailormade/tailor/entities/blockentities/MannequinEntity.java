@@ -19,10 +19,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MannequinEntity extends LivingEntity {
 
-    public final NonNullList<ItemStack> armorItems =
-            NonNullList.withSize(4, ItemStack.EMPTY);
-    public final NonNullList<ItemStack> handItems =
-            NonNullList.withSize(2, ItemStack.EMPTY);
+    public final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
+    public final NonNullList<ItemStack> handItems = NonNullList.withSize(2, ItemStack.EMPTY);
     private float facingYRot = 0F;
 
     public MannequinEntity(EntityType<? extends LivingEntity> type, Level level) {
@@ -40,20 +38,13 @@ public class MannequinEntity extends LivingEntity {
         this.facingYRot = yRot;
     }
 
-//    @Override
-//    public float getYRot() {
-//        return 0F;
-//    }
-
     @Override
     public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 
     @Override
-    public void knockback(double strength, double x, double z) {
-        // 何もしない
-    }
+    public void knockback(double strength, double x, double z) {}
 
     @Override
     public Iterable<ItemStack> getArmorSlots() {
@@ -116,7 +107,6 @@ public class MannequinEntity extends LivingEntity {
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
-
         ItemStack held = player.getItemInHand(hand);
 
         if (!held.isEmpty() && held.getItem() instanceof ArmorItem armor) {
@@ -132,7 +122,6 @@ public class MannequinEntity extends LivingEntity {
             return InteractionResult.sidedSuccess(level().isClientSide());
         }
 
-        // 手が空: HEAD → CHEST → LEGS → FEET の順で取り外す
         if (held.isEmpty()) {
             for (EquipmentSlot slot : new EquipmentSlot[]{
                     EquipmentSlot.HEAD, EquipmentSlot.CHEST,

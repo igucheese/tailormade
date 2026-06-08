@@ -115,15 +115,10 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
     }
 
     @Override
-    public void setupAnim(MannequinEntity entity, float limbSwing, float limbSwingAmount,
-                          float ageInTicks, float netHeadYaw, float headPitch) {
-        //
-    }
+    public void setupAnim(MannequinEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {}
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer,
-                               int packedLight, int packedOverlay,
-                               int color) {
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         head.render(poseStack, buffer, packedLight, packedOverlay, color);
         body.render(poseStack, buffer, packedLight, packedOverlay, color);
         leftArm.render(poseStack, buffer, packedLight, packedOverlay, color);

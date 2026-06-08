@@ -27,17 +27,10 @@ public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, Man
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource,
-                       int packedLight, MannequinEntity entity,
-                       float limbSwing, float limbSwingAmount,
-                       float partialTick, float ageInTicks,
-                       float netHeadYaw, float headPitch) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, MannequinEntity entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         Map<PatternType, int[]> pixelMap = collectPixelData(entity);
         if (pixelMap.isEmpty()) return;
-
-        // エンティティごとにコンポジターを持つ（UUID ベースのキャッシュを流用）
-        TailorTextureCompositor compositor =
-                TailorTextureCompositor.getOrCreate(entity.getUUID());
+        TailorTextureCompositor compositor = TailorTextureCompositor.getOrCreate(entity.getUUID());
 
         ResourceLocation texture = compositor.composeForPreview(pixelMap);
         if (texture == null) return;
@@ -56,10 +49,7 @@ public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, Man
 
     private Map<PatternType, int[]> collectPixelData(MannequinEntity entity) {
         Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             var stack = entity.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
 

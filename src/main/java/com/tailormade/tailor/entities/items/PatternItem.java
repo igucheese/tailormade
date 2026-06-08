@@ -33,7 +33,6 @@ public class PatternItem extends Item {
     @Nullable
     public int[] getPixelData(ItemStack stack) {
         PixelData data = getPixelDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
-//        PixelData data = stack.get(ModDataComponents.PIXEL_DATA.get());
         return data != null ? data.pixels() : null;
     }
 

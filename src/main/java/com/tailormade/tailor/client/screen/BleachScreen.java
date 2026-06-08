@@ -29,31 +29,23 @@ import java.util.Map;
 import static com.tailormade.tailor.Tailormade.MODID;
 
 public class BleachScreen extends AbstractContainerScreen<BleachMenu> {
-
-    // テクスチャ
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/bleaching_counter_gui.png");
 
-    // GUI サイズ（テクスチャに合わせて調整）
     private static final int GUI_W = 110;
     private static final int GUI_H = 94;
     private static final int GUI_OFFSET_X = 9;
     private static final int GUI_OFFSET_Y = 17;
 
-    // 確定ボタン
     private static final int BTN_W = 60;
     private static final int BTN_H = 20;
     private Button confirmButton;
-
-    // ---- コンストラクタ ----------------------------------------
 
     public BleachScreen(BleachMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth  = GUI_W;
         this.imageHeight = GUI_H;
     }
-
-    // ---- 初期化 -----------------------------------------------
 
     @Override
     protected void init() {
@@ -62,11 +54,7 @@ public class BleachScreen extends AbstractContainerScreen<BleachMenu> {
         int btnX = leftPos + 40;
         int btnY = topPos  + 80;
 
-        confirmButton = Button.builder(
-                Component.translatable("gui.tailormade.modal.confirm"),
-                btn -> onConfirm()
-        ).pos(btnX, btnY).size(BTN_W, BTN_H).build();
-
+        confirmButton = Button.builder(Component.translatable("gui.tailormade.modal.confirm"), btn -> onConfirm()).pos(btnX, btnY).size(BTN_W, BTN_H).build();
         addRenderableWidget(confirmButton);
     }
 

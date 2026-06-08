@@ -31,10 +31,8 @@ public class ModServerEvents {
             Tailormade.LOGGER.info("[SYNC] Starting data sync...");
             ServerLevel level = player.serverLevel();
 
-            // 肌のキャッシュ
             syncSkinLayer(player);
             syncUnderwearLayer(player);
-            // デザインデータキャッシュ
             syncDesignData(player);
         }
     }

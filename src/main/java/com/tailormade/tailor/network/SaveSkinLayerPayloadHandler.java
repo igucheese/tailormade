@@ -14,15 +14,11 @@ public class SaveSkinLayerPayloadHandler {
     public static void handle(SaveSkinLayerPayload packet, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!(ctx.player() instanceof ServerPlayer player)) return;
-
-            // バリデーション: 64×64 = 4096 ピクセルのみ受け付ける
             if (packet.pixels().length != 64 * 64) return;
 
-            // SavedData に保存
             ServerLevel overworld = player.getServer().overworld();
             PowderRoomSavedData.get(overworld).setSkinLayer(player.getUUID(), new PixelData(packet.pixels()));
 
-            // 同じワールドの全プレイヤーに配信（他のプレイヤーから見えるように）
             SyncSkinLayerPayload syncPacket =
                     new SyncSkinLayerPayload(player.getUUID(), packet.pixels());
             PacketDistributor.sendToAllPlayers(syncPacket);

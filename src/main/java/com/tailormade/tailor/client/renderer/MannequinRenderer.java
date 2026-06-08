@@ -15,7 +15,8 @@ public class MannequinRenderer extends LivingEntityRenderer<MannequinEntity, Man
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/entity/mannequin_empty.png");
 
     public MannequinRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx,
+        super(
+                ctx,
                 new MannequinModel(ctx.bakeLayer(MannequinModel.LAYER_LOCATION)),
                 0.0F
         );

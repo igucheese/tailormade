@@ -25,7 +25,6 @@ import org.joml.Vector3f;
 import static com.tailormade.tailor.Tailormade.MODID;
 
 public class WardrobeScreen extends Screen {
-
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/wardrobe_gui.png");
 
@@ -89,11 +88,9 @@ public class WardrobeScreen extends Screen {
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
-        // 現在の設定をロード
         Minecraft mc = Minecraft.getInstance();
         UnderwearSetting current = null;
         if (mc.player != null) {
-//            UnderwearSetting current = SkinLayerRenderLayer.getUnderwearSetting(mc.player.getUUID());
             current = UnderwearDataClientCache.get(mc.player.getUUID());
             if (current != null) {
                 selectedType  = current.type();
@@ -107,7 +104,6 @@ public class WardrobeScreen extends Screen {
         underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation);
         applyUnderwearPreview();
 
-        // SAVE ボタン
         int saveX = leftPos + PV_X + PV_W - 63;
         int saveY = topPos  + PV_Y + PV_H + 3;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
@@ -125,7 +121,6 @@ public class WardrobeScreen extends Screen {
         colorPicker.render(g, mouseX, mouseY);
         renderPreview(g, mouseX, mouseY);
         saveButton.render(g, mouseX, mouseY, partialTick);
-//        super.render(g, mouseX, mouseY, partialTick);
     }
 
     protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
@@ -135,15 +130,10 @@ public class WardrobeScreen extends Screen {
         g.blit(GUI_TEXTURE, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, GUI_W, GUI_H, 256, 256);
     }
 
-    // ---- 染料スウォッチ ----------------------------------------
-
-    // ---- 3D プレビュー ----------------------------------------
-
     private void renderPreview(GuiGraphics g, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        // 下着のみプレビュー
         if (composedTexture != null) {
             SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
         } else {
@@ -180,8 +170,6 @@ public class WardrobeScreen extends Screen {
         }
     }
 
-    // ---- マウスイベント ----------------------------------------
-
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (palette.mouseClicked(mx, my)) {
@@ -210,7 +198,6 @@ public class WardrobeScreen extends Screen {
             applyUnderwearPreview();
             return true;
         }
-        // プレビュードラッグ
         if (button == 0 && inPreviewArea(mx, my)) {
             dragStartX = mx; dragStartY = my; return true;
         }
@@ -228,7 +215,6 @@ public class WardrobeScreen extends Screen {
             selectedType = UnderwearType.FEMALE_BIKINI;
         }
         underwearCompositor.init(selectedType.getTexture());
-        System.out.println("[CHECK][mouseClickedOnTypeBoxes]" + selectedType);
     }
 
     @Override
@@ -245,7 +231,6 @@ public class WardrobeScreen extends Screen {
         }
         if (hueBar.mouseDragged(mx, my)) {
             colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
-            // パレットにも反映
             int base = hueBar.getSelectedBaseColor();
             palette.setRgb((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF);
             return true;
@@ -277,8 +262,6 @@ public class WardrobeScreen extends Screen {
 
     private void applyUnderwearPreview() {
         if (underwearCompositor == null) return;
-
-        // パレットの選択色を取得
         int argb = palette.getSelectedColor();
         selectedColor = palette.getSelectedColor();
         this.composedTexture = underwearCompositor.compose(argb);
@@ -287,8 +270,6 @@ public class WardrobeScreen extends Screen {
 
         SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
     }
-
-    // ---- SAVE -------------------------------------------------
 
     private void onSave() {
         PacketDistributor.sendToServer(new SaveUnderwarePayload(new UnderwearSetting(selectedType, selectedColor)));

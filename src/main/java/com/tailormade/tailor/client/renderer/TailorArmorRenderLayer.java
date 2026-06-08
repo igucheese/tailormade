@@ -14,33 +14,23 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class TailorArmorRenderLayer
-        extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-
-    /** プレビュー用テクスチャオーバーライド。null = 通常モード。 */
+public class TailorArmorRenderLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private static ResourceLocation previewOverride = null;
 
     public static void setPreviewOverride(ResourceLocation tex) { previewOverride = tex; }
-    public static void clearPreviewOverride()                   { previewOverride = null; }
+    public static void clearPreviewOverride() { previewOverride = null; }
 
     public TailorArmorRenderLayer(
-            RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
+        RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource,
-                       int packedLight, AbstractClientPlayer player,
-                       float limbSwing, float limbSwingAmount,
-                       float partialTick, float ageInTicks,
-                       float netHeadYaw, float headPitch) {
-
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, AbstractClientPlayer player, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         ResourceLocation texture = resolveTexture(player);
         if (texture == null) return;
-
         if (MannequinStylePreviewHelper.isHideArmor()) { return; }
 
-        // entityTranslucentCull: alpha=0（消しゴム）を正しく透明にする
         getParentModel().renderToBuffer(
                 poseStack,
                 bufferSource.getBuffer(RenderType.entityTranslucentCull(texture)),

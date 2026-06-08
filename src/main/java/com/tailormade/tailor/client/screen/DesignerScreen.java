@@ -40,26 +40,7 @@ import java.util.*;
 import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
-/**
- * デザインテーブルの GUI スクリーン。
- *
- * レイアウト（GUI相対座標 / テクスチャ designer_gui.png に合わせて要調整）:
- *
- *   ┌─────────────────────────────────────────────┐
- *   │[S]│       2D Editor (190x145)      │Preview │
- *   │   │                                │(110x125)│
- *   │pal│                                │        │
- *   │   │                                │[P][P][P]│
- *   │   │  [R___] [G___] [B___]          │  [SAVE]│
- *   └─────────────────────────────────────────────┘
- *
- *   [S]  = メイン型紙スロット
- *   pal  = カラーパレット
- *   [P]  = プレビュー用型紙スロット ×3
- */
 public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
-
-    // GUI テクスチャ
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath("tailormade", "textures/gui/designer_gui.png");
     private static final ResourceLocation BRUSH_1_ICON =
@@ -73,69 +54,51 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final ResourceLocation EYEDROPPER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eyedropper.png");
 
-    // ---- レイアウト定数（テクスチャに合わせて調整） ----
     private static final int GUI_W = 384;
     private static final int GUI_H = 216;
     private static final int GUI_OFFSET_X = 64;
     private static final int GUI_OFFSET_Y = 148;
 
-    // 2D エディタ領域（GUI相対）
     private static final int ED_X = 28;
     private static final int ED_Y = 6;
     private static final int ED_W = 188;
     private static final int ED_H = 188;
-
-    // プレビュー領域（GUI相対）
     private static final int PV_X = 248;
     private static final int PV_Y = 14;
     private static final int PV_W = 124;
     private static final int PV_H = 148;
-
-    // パレット領域（GUI相対）
     private static final int PAL_X = 8;
     private static final int PAL_Y = 34;
-
-    // ツールバー
     private static final int TOOLBAR_X = 223;
     private static final int TOOLBAR_Y = 10;
     private static int BRUSH_SIZE = 1;
     private static String TOOL_MODE = "brush";
 
-    // RGB EditBox
     private static final int RGB_Y_OFFSET = 4;  // エディタ下端からの距離
     private static final int RGB_BOX_W = 28;
     private static final int RGB_BOX_H = 10;
 
-    private ColorPickerWidget colorPicker;
-    private HueBarWidget hueBar;
-
-    // ズーム・パン
     private float zoomScale = 1.0f;
     private float panOffsetX = 0f;
     private float panOffsetY = 0f;
     private double rightDragStartX = -1;
     private double rightDragStartY = -1;
 
-    // ---- フィールド -------------------------------------------
-
     private String clickedArea = null;
-
     private PixelCanvas canvas;
     private ColorPalette palette;
-
     private EditBox nameInput;
-
     private EditBox rBox, gBox, bBox;
     private Button saveButton;
+    private ColorPickerWidget colorPicker;
+    private HueBarWidget hueBar;
 
-    // 未保存チェック
     private boolean hasUnsavedChanges = false;
     private boolean showUnsavedWarning = false;
     private boolean wasPaintingStroke = false;
     private boolean isOnEditBox = false;
     private String beforeEyedropperTool = null;
 
-    // プレビュー回転
     private float previewYaw   = 235.0f; // 正面が見える初期値
     private float previewPitch = 0.0f;
     private double lastDragX;
@@ -149,38 +112,27 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final int FACE_LINE_COLOR  = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
-    // ---- コンストラクタ ----------------------------------------
-
     public DesignerScreen(DesignerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth  = GUI_W;
         this.imageHeight = GUI_H;
     }
 
-    // ---- 初期化 -----------------------------------------------
-
     @Override
     protected void init() {
         super.init();
 
-        // パレット
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
-
-        // キャンバス（型紙スロットに型紙がある場合のみ初期化）
         refreshCanvas();
 
-        // RGB EditBox
         int rgbBaseX = leftPos + 14;
         int rgbY     = topPos  + ED_Y + ED_H + RGB_Y_OFFSET;
-
         rBox = makeRgbBox(rgbBaseX, rgbY, "R");
         gBox = makeRgbBox(rgbBaseX + RGB_BOX_W + 6, rgbY, "G");
         bBox = makeRgbBox(rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, "B");
-
         rBox.setResponder(s -> onRgbEdited());
         gBox.setResponder(s -> onRgbEdited());
         bBox.setResponder(s -> onRgbEdited());
-
         addRenderableWidget(rBox);
         addRenderableWidget(gBox);
         addRenderableWidget(bBox);
@@ -197,7 +149,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         this.nameInput.setHint(Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.addRenderableWidget(this.nameInput);
 
-        // SAVE ボタン
         int saveX = leftPos + PV_X + PV_W - 63;
         int saveY = topPos  + PV_Y + PV_H + 21;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
@@ -221,20 +172,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         super.containerTick();
 
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
-
         if (!ItemStack.matches(this.lastPatternStack, mainStack)) {
             this.lastPatternStack = mainStack.copy();
             this.refreshCanvas();
         }
     }
 
-    /**
-     * メインスロットの型紙に合わせてキャンバスを初期化（または破棄）する。
-     * スロット変更時にも呼ぶ。
-     */
     private void refreshCanvas() {
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
-
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) {
             if (canvas != null) { canvas.close(); canvas = null; }
             return;
@@ -243,20 +188,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         PatternType type  = patternItem.getPatternType(mainStack);
         int[] size        = type.getTextureSize();
 
-        // すでに同じサイズのキャンバスがあれば作り直さない
         if (canvas != null && canvas.getWidth() == size[0] && canvas.getHeight() == size[1]) return;
-
         if (canvas != null) canvas.close();
         canvas = new PixelCanvas(size[0], size[1]);
 
-        // 既存データのロード
         int[] existing = patternItem.getPixelData(mainStack);
         if (existing != null) canvas.loadPixels(existing);
-
         canvas.init();
     }
-
-    // ---- 描画 -------------------------------------------------
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
@@ -273,11 +212,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         renderToolabr(g);
 
         if (showUnsavedWarning) renderUnsavedWarning(g);
-
         this.isOnEditBox = this.nameInput.isFocused();
-
         renderTooltip(g, mouseX, mouseY);
-
         if (canvas != null) canvas.uploadIfDirty();
     }
 
@@ -286,14 +222,12 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
         g.blit(GUI_TEXTURE, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
-//        g.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
     }
 
     private void renderToolabr(GuiGraphics g)
     {
         int toolBarX = this.leftPos + TOOLBAR_X;
         int toolBarY = this.topPos + TOOLBAR_Y;
-        // ツールバー
         g.blit(BRUSH_1_ICON, toolBarX, toolBarY, 0, 0, 10, 10, 10, 10);
         g.blit(BRUSH_2_ICON, toolBarX, toolBarY + 13, 0, 0, 10, 10, 10, 10);
         g.blit(BRUSH_3_ICON, toolBarX, toolBarY + 26, 0, 0, 10, 10, 10, 10);
@@ -311,37 +245,31 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         g.fill(tollBarActiveX + toolBarActiveWidth - 1, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
     }
 
-    /** 2D エディタ領域を描画する */
     private void renderEditor(GuiGraphics g, int mouseX, int mouseY) {
         if (canvas == null) {
-            g.drawCenteredString(font, Component.translatable("gui.tailormade.designer.start").getString(),
-                    leftPos + ED_X + ED_W / 2, topPos + ED_Y + ED_H / 2 - 4, 0xFFFFFFFF);
+            g.drawCenteredString(font, Component.translatable("gui.tailormade.designer.start").getString(), leftPos + ED_X + ED_W / 2, topPos + ED_Y + ED_H / 2 - 4, 0xFFFFFFFF);
             return;
         }
 
-        // キャンバスをエディタ領域にフィット（アスペクト比維持）
-        float scale  = currentScale();
-        int[] rxy    = currentRenderXY();
-        int renderW   = (int)(canvas.getWidth()  * scale);
-        int renderH   = (int)(canvas.getHeight() * scale);
-        int renderX  = rxy[0];
-        int renderY  = rxy[1];
+        float scale = currentScale();
+        int[] rxy = currentRenderXY();
+        int renderW = (int)(canvas.getWidth()  * scale);
+        int renderH = (int)(canvas.getHeight() * scale);
+        int renderX = rxy[0];
+        int renderY = rxy[1];
 
-        // clipping
         int clipX = leftPos + ED_X;
-        int clipY = topPos  + ED_Y;
+        int clipY = topPos + ED_Y;
         g.enableScissor(clipX, clipY, clipX + ED_W, clipY + ED_H);
 
         RenderSystem.enableBlend();
         g.blit(canvas.getTextureLocation(), renderX, renderY, 0, 0, renderW, renderH, renderW, renderH);
         RenderSystem.disableBlend();
 
-        // グリッド線（スケールが4以上の場合のみ）
         if (scale >= 4.0f) {
             drawGrid(g, renderX, renderY, renderW, renderH, scale);
         }
 
-        // ホバーピクセルのハイライト
         int[] hoverPx = screenToPixel(mouseX, mouseY, renderX, renderY, scale);
         if (hoverPx != null) {
             int hx = renderX + (int)(hoverPx[0] * scale);
@@ -364,28 +292,24 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         PatternType.CanvasSegment[] segments = type.getSegments();
         if (segments.length <= 1) return;
 
-        // 上段・下段のどの canvasY 値があるか収集
-        java.util.Set<Integer> rowBoundaries = new java.util.TreeSet<>();
-        java.util.Set<Integer> colBoundaries = new java.util.TreeSet<>();
+        Set<Integer> rowBoundaries = new TreeSet<>();
+        Set<Integer> colBoundaries = new TreeSet<>();
         for (PatternType.CanvasSegment seg : segments) {
             rowBoundaries.add(seg.canvasY());
             colBoundaries.add(seg.canvasX());
         }
 
-        // 行境界線（水平）
         for (int cy : rowBoundaries) {
             if (cy == 0) continue;
             int ly = renderY + (int)(cy * scale);
             g.fill(renderX, ly, renderX + (int)(type.getCanvasW() * scale), ly + 1, 0xAAFFFF00);
         }
-        // 列境界線（垂直）- 同じ canvasY の行内でのみ描画
         for (int cx : colBoundaries) {
             if (cx == 0) continue;
             int lx = renderX + (int)(cx * scale);
             g.fill(lx, renderY, lx + 1, renderY + (int)(type.getCanvasH() * scale), 0xAAFFFF00);
         }
 
-        // セグメントラベル（各セグメントの左上に表示）
         String[][] labels = segmentLabels2D(type);
         if (labels != null) {
             for (PatternType.CanvasSegment seg : segments) {
@@ -404,36 +328,36 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private String[][] segmentLabels2D(PatternType type) {
         return switch (type) {
             case CHEST -> new String[][]{
-                    {"Body",    "R.Arm",    "L.Arm"},     // 上段: スキン
-                    {"BodyOv",  "R.ArmOv",  "L.ArmOv"}   // 下段: オーバーレイ
+                    {"Body", "R.Arm", "L.Arm"},
+                    {"BodyOv", "R.ArmOv", "L.ArmOv"}
             };
             case LEGS -> new String[][]{
-                    {"R.Leg",   "L.Leg"},   // 上段: スキン
-                    {"R.LegOv", "L.LegOv"} // 下段: オーバーレイ
+                    {"R.Leg", "L.Leg"},
+                    {"R.LegOv", "L.LegOv"}
             };
             case FEET -> new String[][]{
-                    {"R.Sole", "L.Sole"},   // 靴底
-                    {"R.Side", "L.Side"}    // 側面下6px
+                    {"R.Sole", "L.Sole"},
+                    {"R.Side", "L.Side"}
             };
             default -> null;
         };
     }
 
     private int getColIndex(PatternType.CanvasSegment[] segs, int canvasX) {
-        java.util.List<Integer> cols = new java.util.ArrayList<>();
+        List<Integer> cols = new ArrayList<>();
         for (PatternType.CanvasSegment s : segs) {
             if (!cols.contains(s.canvasX())) cols.add(s.canvasX());
         }
-        java.util.Collections.sort(cols);
+        Collections.sort(cols);
         return cols.indexOf(canvasX);
     }
 
     private int getRowIndex(PatternType.CanvasSegment[] segs, int canvasY) {
-        java.util.List<Integer> rows = new java.util.ArrayList<>();
+        List<Integer> rows = new ArrayList<>();
         for (PatternType.CanvasSegment s : segs) {
             if (!rows.contains(s.canvasY())) rows.add(s.canvasY());
         }
-        java.util.Collections.sort(rows);
+        Collections.sort(rows);
         return rows.indexOf(canvasY);
     }
 
@@ -465,9 +389,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         mc.player.xRotO = previewPitch;
 
         try {
-            // pose: Z軸π回転（バニラ必須のフリップ）＋ Y軸でボディ回転
-            // cameraOrientation: X軸で頭の上下を制御
-            // この2つを分けることで「ボディが回転しても頭は自然な向き」になる
             Quaternionf pose = new Quaternionf()
                     .rotateZ((float) Math.PI)
                     .rotateY((float) Math.toRadians(previewYaw));
@@ -491,14 +412,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
     }
 
-    /**
-     * メインスロットのキャンバスと、プレビュースロットの型紙データを合わせて
-     * PatternType → int[] マップを構築する。
-     */
     private Map<PatternType, int[]> buildPreviewPixelMap() {
         Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
 
-        // メインスロット: 現在編集中のキャンバスを使う
         if (canvas != null) {
             ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
             if (!mainStack.isEmpty() && mainStack.getItem() instanceof PatternItem patternItem) {
@@ -507,7 +423,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
         }
 
-        // プレビュースロット 1,2,3: 保存済みの型紙データを使う
         int[] previewSlots = {
                 DesignerMenu.PREVIEW_SLOT1,
                 DesignerMenu.PREVIEW_SLOT2,
@@ -528,7 +443,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (pixelData == null) continue;
 
             PatternType type = patternItem.getPatternType(stack);
-            map.putIfAbsent(type, pixelData.pixels()); // メインスロットと被る部位は上書きしない
+            map.putIfAbsent(type, pixelData.pixels());
         }
 
         return map;
@@ -544,19 +459,17 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private void renderUnsavedWarning(GuiGraphics g) {
         int wx = leftPos + imageWidth  / 2 - 64;
         int wy = topPos  + imageHeight / 2 - 22;
-        // 背景
+
         g.fill(wx - 4, wy - 4, wx + 132, wy + 48, 0xDD000000);
         g.drawString(font, Component.translatable("gui.tailormade.designer.warning.title").getString(), wx, wy, 0xFF5555, false);
         g.drawString(font, Component.translatable("gui.tailormade.designer.warning.description").getString(), wx, wy + 12, 0xFFFFFF, false);
-        // Closeボタン
+
         g.fill(wx,      wy + 26, wx + 58,  wy + 38, 0xFF4444);
         g.drawString(font, Component.translatable("gui.tailormade.modal.close").getString(),  wx + 4,  wy + 28, 0xFFFFFF, false);
-        // Cancelボタン
+
         g.fill(wx + 64, wy + 26, wx + 128, wy + 38, 0x444444);
         g.drawString(font, Component.translatable("gui.tailormade.modal.cancel").getString(), wx + 68, wy + 28, 0xFFFFFF, false);
     }
-
-    // ---- マウスイベント ----------------------------------------
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
@@ -653,7 +566,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
         if (hueBar.mouseDragged(mx, my)) {
             colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
-            // パレットにも反映
             int base = hueBar.getSelectedBaseColor();
             palette.setRgb((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF);
             syncRgbBoxesFromPalette();
@@ -664,7 +576,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             syncRgbBoxesFromPalette();
             return true;
@@ -676,16 +588,16 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     public boolean mouseScrolled(double mx, double my, double dx, double dy) {
         if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
 
-        float oldScale    = currentScale();
-        float minZoom     = 1.0f;  // fitScale 相当が縮小限界
-        float newZoom     = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
+        float oldScale = currentScale();
+        float minZoom = 1.0f;  // fitScale 相当が縮小限界
+        float newZoom = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
 
         // ズーム限界（16x16 が表示できる程度）
-        float maxZoom     = Math.min(ED_W, ED_H) / 16.0f / fitScale();
-        newZoom           = Math.min(newZoom, maxZoom);
+        float maxZoom = Math.min(ED_W, ED_H) / 16.0f / fitScale();
+        newZoom = Math.min(newZoom, maxZoom);
 
-        float newScale    = fitScale() * newZoom;
-        float scaleDelta  = newScale / oldScale;
+        float newScale = fitScale() * newZoom;
+        float scaleDelta = newScale / oldScale;
 
         // マウス位置を中心に拡縮
         int[] rxy = currentRenderXY();
@@ -735,14 +647,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         boolean ctrl  = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT)   != 0;
         if (ctrl && keyCode == GLFW.GLFW_KEY_Z) {
-            System.out.println("[CHECK][KEY PRESSSED]" + "Z!");
             if (canvas == null) return true;
-            System.out.println("[CHECK][KEY PRESSSED]" + "Z! 1");
             if (shift) {
-                System.out.println("[CHECK][KEY PRESSSED]" + "Z! 2");
                 canvas.redo();
             } else {
-                System.out.println("[CHECK][KEY PRESSSED]" + "Z! 3");
                 canvas.undo();
             }
             hasUnsavedChanges = canvas.canUndo(); // Undo 履歴が空なら未保存フラグも落とす
@@ -768,21 +676,17 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private boolean handleWarningClick(double mx, double my) {
         int wx = leftPos + imageWidth  / 2 - 64;
         int wy = topPos  + imageHeight / 2 - 22;
-        // Close
         if (inBox(mx, my, wx, wy + 26, 58, 12)) {
             hasUnsavedChanges = false;
             super.onClose();
             return true;
         }
-        // Cancel
         if (inBox(mx, my, wx + 64, wy + 26, 64, 12)) {
             showUnsavedWarning = false;
             return true;
         }
-        return true; // ダイアログ外クリックを吸収
+        return true;
     }
-
-    // ---- 描画ユーティリティ ------------------------------------
 
     private void applyBrush(double mx, double my) {
         if (canvas == null) return;
@@ -810,7 +714,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
         } else {
             if (TOOL_MODE == "bucket") {
-                // 塗りつぶし
                 canvas.fill(palette.getSelectedColor());
             } else {
                 canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
@@ -820,7 +723,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         wasPaintingStroke  = true;
     }
 
-    /** スクリーン座標 → キャンバスのピクセル座標。範囲外なら null。 */
     private int[] screenToPixel(int mx, int my, int renderX, int renderY, float scale) {
         int px = (int)((mx - renderX) / scale);
         int py = (int)((my - renderY) / scale);
@@ -828,7 +730,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return new int[]{px, py};
     }
 
-    /** エディタ領域にキャンバスをフィットさせるスケールを返す */
     private float fitScale() {
         if (canvas == null) return 1.0f;
         return Math.min((float) ED_W / canvas.getWidth(), (float) ED_H / canvas.getHeight());
@@ -866,17 +767,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y, 16, 186);
     }
 
-    // ---- RGB EditBox / パレット同期 ----------------------------
-
     private void onRgbEdited() {
         try {
             int r = Integer.parseInt(rBox.getValue());
             int g = Integer.parseInt(gBox.getValue());
             int b = Integer.parseInt(bBox.getValue());
             palette.setRgb(r, g, b);
-        } catch (NumberFormatException ignored) {
-            // 入力途中は無視
-        }
+        } catch (NumberFormatException ignored) {}
     }
 
     private void syncRgbBoxesFromPalette() {
@@ -887,10 +784,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         rBox.setValue(String.valueOf(r));
         gBox.setValue(String.valueOf(g));
         bBox.setValue(String.valueOf(b));
-        System.out.println("[CHECK][syncRgbBoxesFromPalette] R: " + r + " G:" + g + " B:" + b);
     }
-
-    // ---- SAVE / CLOSE -----------------------------------------
 
     private void onSave() {
         if (canvas == null) return;
@@ -907,7 +801,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     @Override
     public void onClose() {
-        // 未保存データがあれば警告ダイアログを出す
         if (hasUnsavedChanges && !showUnsavedWarning) {
             showUnsavedWarning = true;
             return;
@@ -925,11 +818,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         super.removed();
     }
 
-    // ---- その他オーバーライド ----------------------------------
-
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        // デフォルトのタイトルラベルは表示しない
+        //
     }
 
     @Override

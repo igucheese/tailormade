@@ -38,8 +38,6 @@ public record SyncSkinLayerPayload (UUID uuid, int[] pixels) implements CustomPa
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public static void handle(SyncSkinLayerPayload packet, IPayloadContext ctx) {
-//        ctx.enqueueWork(() ->
-//                SkinLayerRenderLayer.updateSkinPixels(packet.uuid(), packet.pixels()));
         ctx.enqueueWork(() -> {
             SkinDataClientCache.updateCache(packet.uuid(), new PixelData(packet.pixels()));
             Tailormade.LOGGER.info("[CACHE_SYNC_SKIN] Sync completed: " + packet.uuid());
