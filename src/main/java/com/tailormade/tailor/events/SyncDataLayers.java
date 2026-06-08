@@ -2,19 +2,14 @@ package com.tailormade.tailor.events;
 
 import com.tailormade.tailor.Tailormade;
 import com.tailormade.tailor.data.*;
-import com.tailormade.tailor.network.payloads.SyncAllDesignsPayload;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.network.payloads.SyncSkinLayerPayload;
-import com.tailormade.tailor.network.payloads.SyncUnderwarePayload;
+import com.tailormade.tailor.network.payloads.SyncUnderwearPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.Collection;
-
-import static com.tailormade.tailor.client.renderer.SkinLayerRenderLayer.getSkinPixels;
-import static com.tailormade.tailor.client.renderer.SkinLayerRenderLayer.getUnderwearSetting;
 
 public class SyncDataLayers {
     public static void syncSkinLayer(ServerPlayer player) {
@@ -33,7 +28,7 @@ public class SyncDataLayers {
         Collection<UnderwearSetting> settings = WardrobeSavedData.get((ServerLevel) player.level()).index();
         for (UnderwearSetting setting : settings) {
             Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + setting);
-            PacketDistributor.sendToPlayer(player, new SyncUnderwarePayload(player.getUUID(), setting));
+            PacketDistributor.sendToPlayer(player, new SyncUnderwearPayload(player.getUUID(), setting));
         }
     }
 

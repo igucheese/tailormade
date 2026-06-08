@@ -45,7 +45,7 @@ public class TailorTextureCompositor {
     }
 
     private TailorTextureCompositor() {
-        dynamicTexture  = new DynamicTexture(SKIN_W, SKIN_H, true);
+        dynamicTexture = new DynamicTexture(SKIN_W, SKIN_H, true);
         String textureName = "tailor_composite_" + COUNTER.getAndIncrement();
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
@@ -100,14 +100,13 @@ public class TailorTextureCompositor {
                 img.setPixelRGBA(x, y, 0);
 
         for (var entry : pixelMap.entrySet()) {
-            PatternType type    = entry.getKey();
-            int[]       pixels  = entry.getValue();
-            int         canvasW = type.getCanvasW();
+            PatternType type = entry.getKey();
+            int[] pixels = entry.getValue();
+            int canvasW = type.getCanvasW();
 
             for (PatternType.CanvasSegment seg : type.getSegments()) {
                 for (int y = 0; y < seg.h(); y++) {
                     for (int x = 0; x < seg.w(); x++) {
-                        // キャンバス配列: (canvasY + y) * canvasW + (canvasX + x)
                         int idx = (seg.canvasY() + y) * canvasW + (seg.canvasX() + x);
                         if (idx < 0 || idx >= pixels.length) continue;
 
@@ -125,7 +124,7 @@ public class TailorTextureCompositor {
         int a = (argb >> 24) & 0xFF;
         int r = (argb >> 16) & 0xFF;
         int g = (argb >>  8) & 0xFF;
-        int b =  argb        & 0xFF;
+        int b =  argb & 0xFF;
         return (a << 24) | (b << 16) | (g << 8) | r;
     }
 
@@ -143,7 +142,7 @@ public class TailorTextureCompositor {
             case CHEST -> PatternType.CHEST;
             case LEGS  -> PatternType.LEGS;
             case FEET  -> PatternType.FEET;
-            default    -> null;
+            default -> null;
         };
     }
 

@@ -33,18 +33,18 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
     private static float overlaySize = 0.1F;
 
     public MannequinModel(ModelPart root) {
-        this.head     = root.getChild("head");
-        this.body     = root.getChild("body");
-        this.leftArm  = root.getChild("leftArm");
+        this.head = root.getChild("head");
+        this.body = root.getChild("body");
+        this.leftArm = root.getChild("leftArm");
         this.rightArm = root.getChild("rightArm");
         this.rightLeg = root.getChild("rightLeg");
-        this.leftLeg  = root.getChild("leftLeg");
-        this.hat  = root.getChild("hat");
-        this.jacket  = root.getChild("jacket");
-        this.rightSleeve  = root.getChild("rightSleeve");
-        this.leftSleeve  = root.getChild("leftSleeve");
-        this.rightPants  = root.getChild("rightPants");
-        this.leftPants  = root.getChild("leftPants");
+        this.leftLeg = root.getChild("leftLeg");
+        this.hat = root.getChild("hat");
+        this.jacket = root.getChild("jacket");
+        this.rightSleeve = root.getChild("rightSleeve");
+        this.leftSleeve = root.getChild("leftSleeve");
+        this.rightPants = root.getChild("rightPants");
+        this.leftPants = root.getChild("leftPants");
     }
 
     public static LayerDefinition createBodyLayer() {

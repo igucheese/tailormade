@@ -8,19 +8,26 @@ import com.tailormade.tailor.client.renderer.UnderwearTextureCompositor;
 import com.tailormade.tailor.data.UnderwearDataClientCache;
 import com.tailormade.tailor.data.UnderwearSetting;
 import com.tailormade.tailor.data.UnderwearType;
-import com.tailormade.tailor.network.payloads.SaveUnderwarePayload;
+import com.tailormade.tailor.network.payloads.SaveUnderwearPayload;
+import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 
@@ -50,13 +57,13 @@ public class WardrobeScreen extends Screen {
     private int imageWidth;
     private int imageHeight;
 
-    private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
+    private UnderwearType selectedType = UnderwearType.MALE_BOXER;
     private int selectedColor = 0xFF000000;
     private ColorPalette palette;
     private ColorPickerWidget colorPicker;
     private HueBarWidget hueBar;
 
-    private float previewYaw   = 235.0f; // 正面が見える初期値
+    private float previewYaw = 235.0f;
     private float previewPitch = 0.0f;
     private double lastDragX;
     private boolean draggingPreview = false;
@@ -70,14 +77,14 @@ public class WardrobeScreen extends Screen {
 
     public WardrobeScreen() {
         super(Component.translatable("gui.tailormade.wardrobe"));
-        this.imageWidth  = GUI_W;
+        this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
     }
 
     @Override
     protected void init() {
         leftPos = (width  - GUI_W) / 2;
-        topPos  = (height - GUI_H) / 2;
+        topPos = (height - GUI_H) / 2;
 
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
         palette.disableEraser();
@@ -93,10 +100,9 @@ public class WardrobeScreen extends Screen {
         if (mc.player != null) {
             current = UnderwearDataClientCache.get(mc.player.getUUID());
             if (current != null) {
-                selectedType  = current.type();
+                selectedType = current.type();
                 selectedColor = current.color();
                 palette.setSelectedColor(current.color());
-                System.out.println("[CHECK][WR CURRENT UNDERWARE TYPE] : " + selectedType + ", COLOR: " + selectedColor);
             }
         }
 
@@ -105,7 +111,7 @@ public class WardrobeScreen extends Screen {
         applyUnderwearPreview();
 
         int saveX = leftPos + PV_X + PV_W - 63;
-        int saveY = topPos  + PV_Y + PV_H + 3;
+        int saveY = topPos + PV_Y + PV_H + 3;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
                 .pos(saveX, saveY)
                 .size(65, 24)
@@ -141,7 +147,7 @@ public class WardrobeScreen extends Screen {
         }
         MannequinStylePreviewHelper.setHideArmor(true);
 
-        float savedXRot  = mc.player.getXRot();
+        float savedXRot = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
         mc.player.setXRot(previewPitch);
         mc.player.xRotO = previewPitch;
@@ -151,7 +157,7 @@ public class WardrobeScreen extends Screen {
                     .rotateZ((float) Math.PI)
                     .rotateY((float) Math.toRadians(previewYaw));
             int centerX = leftPos + PV_X + PV_W / 2;
-            int centerY = topPos  + PV_Y + PV_H / 2 + 50;
+            int centerY = topPos + PV_Y + PV_H / 2 + 50;
 
             InventoryScreen.renderEntityInInventory(
                     g,
@@ -188,7 +194,7 @@ public class WardrobeScreen extends Screen {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             applyUnderwearPreview();
             return true;
@@ -220,8 +226,8 @@ public class WardrobeScreen extends Screen {
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (button == 0 && dragStartX >= 0) {
-            previewYaw   += (float)(mx - dragStartX) * 1.0f;
-            previewPitch  = Math.clamp(
+            previewYaw += (float)(mx - dragStartX) * 1.0f;
+            previewPitch = Math.clamp(
                     previewPitch + (float)(my - dragStartY) * 0.5f,
                     -180.0f, 180.0f
             );
@@ -240,7 +246,7 @@ public class WardrobeScreen extends Screen {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             return true;
         }
@@ -256,23 +262,22 @@ public class WardrobeScreen extends Screen {
     }
 
     private boolean inPreviewArea(double mx, double my) {
-        return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W
-                && my >= topPos  + PV_Y && my < topPos  + PV_Y + PV_H;
+        return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W && my >= topPos + PV_Y && my < topPos + PV_Y + PV_H;
     }
 
     private void applyUnderwearPreview() {
         if (underwearCompositor == null) return;
         int argb = palette.getSelectedColor();
         selectedColor = palette.getSelectedColor();
-        this.composedTexture = underwearCompositor.compose(argb);
-        System.out.println("[CHECK][APPLY UNDERWEAR TEX] " + composedTexture);
+        this.composedTexture = underwearCompositor.setIsPreview(true).compose(argb, null);
+        underwearCompositor.setIsPreview(false);
         if (composedTexture == null) return;
 
         SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
     }
 
     private void onSave() {
-        PacketDistributor.sendToServer(new SaveUnderwarePayload(new UnderwearSetting(selectedType, selectedColor)));
+        PacketDistributor.sendToServer(new SaveUnderwearPayload(new UnderwearSetting(selectedType, selectedColor)));
         onClose();
     }
 

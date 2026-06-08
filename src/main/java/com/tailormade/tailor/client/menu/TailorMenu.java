@@ -30,22 +30,22 @@ import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class TailorMenu extends AbstractContainerMenu {
     public static final int SLOT_PATTERN = 0;
-    public static final int SLOT_ARMOR   = 1;
-    public static final int SLOT_DYE_R   = 2;
-    public static final int SLOT_DYE_G   = 3;
-    public static final int SLOT_DYE_B   = 4;
+    public static final int SLOT_ARMOR = 1;
+    public static final int SLOT_DYE_R = 2;
+    public static final int SLOT_DYE_G = 3;
+    public static final int SLOT_DYE_B = 4;
     public static final int BLOCK_SLOT_COUNT = 5;
 
     public static final int SLOT_PATTERN_X = 72;
     public static final int SLOT_PATTERN_Y = 28;
-    public static final int SLOT_ARMOR_X   = 104;
-    public static final int SLOT_ARMOR_Y   = 28;
-    public static final int SLOT_DYE_R_X   = 64;
-    public static final int SLOT_DYE_R_Y   = 60;
-    public static final int SLOT_DYE_G_X   = 64;
-    public static final int SLOT_DYE_G_Y   = 76;
-    public static final int SLOT_DYE_B_X   = 64;
-    public static final int SLOT_DYE_B_Y   = 92;
+    public static final int SLOT_ARMOR_X = 104;
+    public static final int SLOT_ARMOR_Y = 28;
+    public static final int SLOT_DYE_R_X = 64;
+    public static final int SLOT_DYE_R_Y = 60;
+    public static final int SLOT_DYE_G_X = 64;
+    public static final int SLOT_DYE_G_Y = 76;
+    public static final int SLOT_DYE_B_X = 64;
+    public static final int SLOT_DYE_B_Y = 92;
     public static final int INV_X = 16;
     public static final int INV_Y = 134;
 
@@ -126,7 +126,7 @@ public class TailorMenu extends AbstractContainerMenu {
 
         int space = TailorBlockEntity.TANK_MAX - tank;
         int itemsNeeded = (int) Math.ceil((double) space / TailorBlockEntity.DYE_PER_ITEM);
-        int itemsToUse  = Math.min(stack.getCount(), itemsNeeded);
+        int itemsToUse = Math.min(stack.getCount(), itemsNeeded);
 
         int amount = itemsToUse * TailorBlockEntity.DYE_PER_ITEM;
         switch (channel) {

@@ -28,7 +28,7 @@ public record SyncSkinLayerPayload (UUID uuid, int[] pixels) implements CustomPa
                     },
                     buf -> {
                         UUID uuid = buf.readUUID();
-                        int len   = buf.readVarInt();
+                        int len = buf.readVarInt();
                         int[] arr = new int[len];
                         for (int i = 0; i < len; i++) arr[i] = buf.readInt();
                         return new SyncSkinLayerPayload(uuid, arr);

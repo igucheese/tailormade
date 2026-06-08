@@ -1,14 +1,10 @@
 package com.tailormade.tailor.network.payloads;
 
 import com.tailormade.tailor.Tailormade;
-import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
-import com.tailormade.tailor.data.PixelData;
-import com.tailormade.tailor.data.SkinDataClientCache;
 import com.tailormade.tailor.data.UnderwearDataClientCache;
 import com.tailormade.tailor.data.UnderwearSetting;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -18,20 +14,20 @@ import java.util.UUID;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 
-public record SyncUnderwarePayload (UUID uuid, UnderwearSetting setting) implements CustomPacketPayload {
+public record SyncUnderwearPayload(UUID uuid, UnderwearSetting setting) implements CustomPacketPayload {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(MODID, "sync_underwear");
-    public static final Type<SyncUnderwarePayload> TYPE = new Type<>(ID);
+    public static final Type<SyncUnderwearPayload> TYPE = new Type<>(ID);
 
-    public static final StreamCodec<FriendlyByteBuf, SyncUnderwarePayload> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, SyncUnderwarePayload::uuid,
-            UnderwearSetting.STREAM_CODEC, SyncUnderwarePayload::setting,
-            SyncUnderwarePayload::new
+    public static final StreamCodec<FriendlyByteBuf, SyncUnderwearPayload> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, SyncUnderwearPayload::uuid,
+            UnderwearSetting.STREAM_CODEC, SyncUnderwearPayload::setting,
+            SyncUnderwearPayload::new
     );
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    public static void handle(SyncUnderwarePayload packet, IPayloadContext ctx) {
+    public static void handle(SyncUnderwearPayload packet, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             UnderwearDataClientCache.updateCache(packet.uuid(), packet.setting());
             Tailormade.LOGGER.info("[CACHE_SYNC_UNDERWEAR] Sync completed: " + packet.uuid() + " body: " + packet.setting());

@@ -50,16 +50,12 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
     private static final int BTN_W = 100;
     private static final int BTN_H = 20;
 
-    private static final int GAUGE_W  = 4;
-    private static final int GAUGE_H  = 14;
-    private static final int GAUGE_OX = 20;
-
     private Button confirmButton;
     private TailorTextureCompositor previewCompositor;
 
     public TailorScreen(TailorMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        this.imageWidth  = GUI_W;
+        this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
     }
 
@@ -69,7 +65,7 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         previewCompositor = TailorTextureCompositor.createForPreview();
 
         int btnX = leftPos + PV_X + (PV_W - BTN_W) / 2;
-        int btnY = topPos  + PV_Y + PV_H + 4 + 50;
+        int btnY = topPos + PV_Y + PV_H + 4 + 50;
 
         this.nameInput = new EditBox(this.font, leftPos + PV_X, topPos + PV_Y + PV_H + 5, PV_W, 20, Component.translatable("gui.tailormade.tailor.name.placeholder"));
         this.nameInput.setMaxLength(15);
@@ -150,7 +146,7 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         if (mc.player == null) return;
 
         ItemStack patternStack = menu.getSlot(0).getItem();
-        ItemStack armorStack   = menu.getSlot(1).getItem();
+        ItemStack armorStack = menu.getSlot(1).getItem();
 
         if (patternStack.isEmpty() || armorStack.isEmpty()) return;
         if (!(patternStack.getItem() instanceof PatternItem patternItem)) return;
@@ -171,9 +167,9 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
             InventoryScreen.renderEntityInInventoryFollowsMouse(
                     g,
                     leftPos + PV_X,
-                    topPos  + PV_Y,
+                    topPos + PV_Y,
                     leftPos + PV_X + PV_W,
-                    topPos  + PV_Y + PV_H,
+                    topPos + PV_Y + PV_H,
                     65,
                     0.0625f,
                     (float) mouseX,

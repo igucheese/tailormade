@@ -100,7 +100,7 @@ public class PowderRoomScreen extends Screen {
     private Button saveButton;
     private String beforeEyedropperTool = null;
 
-    private float previewYaw   = 235.0f; // 正面が見える初期値
+    private float previewYaw = 235.0f;
     private float previewPitch = 0.0f;
     private double lastDragX;
     private boolean draggingPreview = false;
@@ -108,25 +108,25 @@ public class PowderRoomScreen extends Screen {
     private double dragStartY = -1;
 
     private UnderwearSetting previewUnderwear = UnderwearSetting.DEFAULT;
-    private UnderwearType selectedType  = UnderwearType.MALE_BOXER;
+    private UnderwearType selectedType = UnderwearType.MALE_BOXER;
     private int selectedColor = 0xFF000000;
 
     private TailorTextureCompositor previewCompositor;
     private boolean hasUnsavedChanges = false;
 
-    private static final int FACE_LINE_COLOR  = 0x3300DDFF;
+    private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
     public PowderRoomScreen() {
         super(Component.translatable("gui.tailormade.powder_room"));
-        this.imageWidth  = GUI_W;
+        this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
     }
 
     @Override
     protected void init() {
         leftPos = (width  - GUI_W) / 2;
-        topPos  = (height - GUI_H) / 2;
+        topPos = (height - GUI_H) / 2;
 
         previewCompositor = TailorTextureCompositor.createForPreview();
 
@@ -144,10 +144,9 @@ public class PowderRoomScreen extends Screen {
 
             UnderwearSetting current = UnderwearDataClientCache.get(mc.player.getUUID());
             if (current != null) {
-                selectedType  = current.type();
+                selectedType = current.type();
                 selectedColor = current.color();
                 this.previewUnderwear = current;
-                System.out.println("[CHECK][CURRENT UNDERWARE TYPE] : " + selectedType + ", COLOR: " + selectedColor);
             }
         }
 
@@ -163,7 +162,7 @@ public class PowderRoomScreen extends Screen {
         colorPicker.init();
 
         int rgbBaseX = leftPos + 14;
-        int rgbY     = topPos  + ED_Y + ED_H + RGB_Y_OFFSET;
+        int rgbY = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
         rBox = makeRgbBox(rgbBaseX, rgbY, "R");
         gBox = makeRgbBox(rgbBaseX + RGB_BOX_W + 6, rgbY, "G");
         bBox = makeRgbBox(rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, "B");
@@ -175,7 +174,7 @@ public class PowderRoomScreen extends Screen {
         addRenderableWidget(bBox);
 
         int saveX = leftPos + PV_X + PV_W - 63;
-        int saveY = topPos  + PV_Y + PV_H + 21;
+        int saveY = topPos + PV_Y + PV_H + 21;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
                 .pos(saveX, saveY)
                 .size(65, 24)
@@ -197,13 +196,12 @@ public class PowderRoomScreen extends Screen {
             var texture = Minecraft.getInstance()
                     .getTextureManager()
                     .getTexture(player.getSkin().texture());
-            if (texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dt
-                    && dt.getPixels() != null) {
+            if (texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dt && dt.getPixels() != null) {
                 int abgr = dt.getPixels().getPixelRGBA(9, 9);
                 int a = (abgr >> 24) & 0xFF;
                 int b = (abgr >> 16) & 0xFF;
                 int g = (abgr >>  8) & 0xFF;
-                int r =  abgr        & 0xFF;
+                int r =  abgr & 0xFF;
                 skinColor = (a << 24) | (r << 16) | (g << 8) | b;
             }
         } catch (Exception ignored) {}
@@ -273,15 +271,15 @@ public class PowderRoomScreen extends Screen {
     private void renderEditor(GuiGraphics g, int mouseX, int mouseY) {
         if (canvas == null) return;
 
-        float scale  = currentScale();
-        int[] rxy    = currentRenderXY();
-        int renderW  = (int)(64 * scale);
-        int renderH  = (int)(64 * scale);
-        int renderX  = rxy[0];
-        int renderY  = rxy[1];
+        float scale = currentScale();
+        int[] rxy = currentRenderXY();
+        int renderW = (int)(64 * scale);
+        int renderH = (int)(64 * scale);
+        int renderX = rxy[0];
+        int renderY = rxy[1];
 
         int clipX = leftPos + ED_X;
-        int clipY = topPos  + ED_Y;
+        int clipY = topPos + ED_Y;
         g.enableScissor(clipX, clipY, clipX + ED_W, clipY + ED_H);
 
         RenderSystem.enableBlend();
@@ -326,7 +324,7 @@ public class PowderRoomScreen extends Screen {
 
         MannequinStylePreviewHelper.setHideArmor(true);
 
-        float savedXRot  = mc.player.getXRot();
+        float savedXRot = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
         mc.player.setXRot(previewPitch);
         mc.player.xRotO = previewPitch;
@@ -338,7 +336,7 @@ public class PowderRoomScreen extends Screen {
             Quaternionf camera = new Quaternionf()
                     .rotateX((float) Math.toRadians(previewPitch));
             int centerX = leftPos + PV_X + PV_W / 2;
-            int centerY = topPos  + PV_Y + PV_H / 2 + 50;
+            int centerY = topPos + PV_Y + PV_H / 2 + 50;
 
             InventoryScreen.renderEntityInInventory(
                     g,
@@ -372,7 +370,7 @@ public class PowderRoomScreen extends Screen {
     private void renderRgbLabels(GuiGraphics g) {
         int ly = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
         g.drawString(font, "R", leftPos + 8, ly + 1, 0xFFFFFF, false);
-        g.drawString(font, "G", leftPos + 8 + RGB_BOX_W  + 6, ly + 1, 0xFFFFFF, false);
+        g.drawString(font, "G", leftPos + 8 + RGB_BOX_W + 6, ly + 1, 0xFFFFFF, false);
         g.drawString(font, "B", leftPos + 8 + (RGB_BOX_W * 2) + 12, ly + 1, 0xFFFFFF, false);
     }
 
@@ -401,7 +399,7 @@ public class PowderRoomScreen extends Screen {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             syncRgbBoxes();
             return true;
@@ -449,15 +447,14 @@ public class PowderRoomScreen extends Screen {
             beforeEyedropperTool = TOOL_MODE;
             TOOL_MODE = "eyedropper";
         }
-        System.out.println("[CHECK][BRUSH SIZE]" + BRUSH_SIZE + " " + TOOL_MODE);
     }
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (button == 0 && inEditorArea(mx, my) && clickedArea == "editor") { applyBrush(mx, my); return true; }
         if (button == 0 && dragStartX >= 0) {
-            previewYaw   += (float)(mx - dragStartX) * 1.0f;
-            previewPitch  = Math.clamp(
+            previewYaw += (float)(mx - dragStartX) * 1.0f;
+            previewPitch = Math.clamp(
                     previewPitch + (float)(my - dragStartY) * 0.5f,
                     -180.0f, 180.0f
             );
@@ -485,7 +482,7 @@ public class PowderRoomScreen extends Screen {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             syncRgbBoxes();
             return true;
@@ -498,22 +495,20 @@ public class PowderRoomScreen extends Screen {
         if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
 
         float oldScale = currentScale();
-        float minZoom = 1.0f;  // fitScale 相当が縮小限界
+        float minZoom = 1.0f;
         float newZoom = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
 
         float maxZoom = Math.min(ED_W, ED_H) / 16.0f / fitScale();
         newZoom = Math.min(newZoom, maxZoom);
 
         float newScale = fitScale() * newZoom;
-        float scaleDelta  = newScale / oldScale;
+        float scaleDelta = newScale / oldScale;
 
         int[] rxy = currentRenderXY();
         panOffsetX = (float)(mx - (mx - rxy[0]) * scaleDelta - (leftPos + ED_X + (ED_W - canvas.getWidth() * newScale) / 2));
-        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos  + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
+        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
 
         zoomScale = newZoom;
-
-        // 縮小限界ではオフセットをリセット
         if (zoomScale <= 1.0f) { panOffsetX = 0; panOffsetY = 0; }
 
         return true;
@@ -531,8 +526,8 @@ public class PowderRoomScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        boolean ctrl  = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0;
-        boolean shift = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT)   != 0;
+        boolean ctrl = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0;
+        boolean shift = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
         if (ctrl && keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_Z) {
             if (shift) canvas.redo(); else canvas.undo();
             hasUnsavedChanges = true;
@@ -567,10 +562,10 @@ public class PowderRoomScreen extends Screen {
     }
 
     private void applyBrush(double mx, double my) {
-        float scale  = currentScale();
-        int[] rxy    = currentRenderXY();
-        int renderX  = rxy[0];
-        int renderY  = rxy[1];
+        float scale = currentScale();
+        int[] rxy = currentRenderXY();
+        int renderX = rxy[0];
+        int renderY = rxy[1];
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
 
@@ -586,7 +581,6 @@ public class PowderRoomScreen extends Screen {
             int color = canvas.getPixel(px[0], px[1]);
             palette.setSelectedColor(color);
             palette.syncRgbFromColor();
-            System.out.println("[CHECK][EYEDROPPER] " + color + ", R : " + palette.getRValue() + ", G : " + palette.getGValue() + ", B : " + palette.getBValue());
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
@@ -602,8 +596,7 @@ public class PowderRoomScreen extends Screen {
 
     private boolean isHeadArea(int px, int py) {
         for (PatternType.CanvasSegment seg : PatternType.HEAD.getSegments()) {
-            if (px >= seg.uvX() && px < seg.uvX() + seg.w()
-                    && py >= seg.uvY() && py < seg.uvY() + seg.h()) {
+            if (px >= seg.uvX() && px < seg.uvX() + seg.w() && py >= seg.uvY() && py < seg.uvY() + seg.h()) {
                 return true;
             }
         }
@@ -627,11 +620,11 @@ public class PowderRoomScreen extends Screen {
     }
 
     private int[] currentRenderXY() {
-        float scale  = currentScale();
-        int renderW  = (int)(canvas.getWidth()  * scale);
-        int renderH  = (int)(canvas.getHeight() * scale);
-        int baseX    = leftPos + ED_X + (ED_W - renderW) / 2;
-        int baseY    = topPos  + ED_Y + (ED_H - renderH) / 2;
+        float scale = currentScale();
+        int renderW = (int)(canvas.getWidth()  * scale);
+        int renderH = (int)(canvas.getHeight() * scale);
+        int baseX = leftPos + ED_X + (ED_W - renderW) / 2;
+        int baseY = topPos + ED_Y + (ED_H - renderH) / 2;
         return new int[]{
                 (int)(baseX + panOffsetX),
                 (int)(baseY + panOffsetY)
@@ -639,12 +632,10 @@ public class PowderRoomScreen extends Screen {
     }
 
     private boolean inEditorArea(double mx, double my) {
-        return mx >= leftPos + ED_X && mx < leftPos + ED_X + ED_W
-                && my >= topPos  + ED_Y && my < topPos  + ED_Y + ED_H;
+        return mx >= leftPos + ED_X && mx < leftPos + ED_X + ED_W && my >= topPos + ED_Y && my < topPos + ED_Y + ED_H;
     }
     private boolean inPreviewArea(double mx, double my) {
-        return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W
-                && my >= topPos  + PV_Y && my < topPos  + PV_Y + PV_H;
+        return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W && my >= topPos + PV_Y && my < topPos + PV_Y + PV_H;
     }
     private boolean inToolbar(double mx, double my) {
         return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y, 16, 186);

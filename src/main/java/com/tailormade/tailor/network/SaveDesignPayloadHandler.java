@@ -36,8 +36,8 @@ public class SaveDesignPayloadHandler {
             return;
         }
 
-        int slotIndex     = packet.slotIndex();
-        ItemStack stack   = menu.getPatternContainer().getItem(slotIndex);
+        int slotIndex = packet.slotIndex();
+        ItemStack stack = menu.getPatternContainer().getItem(slotIndex);
         if (stack.isEmpty() || !(stack.getItem() instanceof PatternItem patternItem)) {
             Tailormade.LOGGER.warn(
                     "SavePattern: スロット {} に PatternItem がありません",
@@ -47,8 +47,8 @@ public class SaveDesignPayloadHandler {
         }
 
         int[] incomingPixels = packet.pixelData().pixels();
-        int[] expectedSize   = patternItem.getPatternType(stack).getTextureSize();
-        int expectedLen      = expectedSize[0] * expectedSize[1];
+        int[] expectedSize = patternItem.getPatternType(stack).getTextureSize();
+        int expectedLen = expectedSize[0] * expectedSize[1];
         if (incomingPixels.length != expectedLen) {
             Tailormade.LOGGER.warn(
                     "SavePattern: ピクセルデータのサイズが不正です (期待値={}, 実際の値={})",
