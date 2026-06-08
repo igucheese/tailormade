@@ -16,7 +16,7 @@ import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
 public class PixelCanvas {
 
-    public static final int TRANSPARENT  = 0x00000000;
+    public static final int TRANSPARENT = 0x00000000;
     public static final int DEFAULT_COLOR = 0xFFFFFFFF;
 
     private static final int HISTORY_MAX = 20;
@@ -34,7 +34,7 @@ public class PixelCanvas {
     private boolean isSkin = false;
 
     public PixelCanvas(int width, int height) {
-        this.width  = width;
+        this.width = width;
         this.height = height;
         this.pixels = new int[width * height];
         Arrays.fill(this.pixels, DEFAULT_COLOR);
@@ -42,7 +42,7 @@ public class PixelCanvas {
 
     public void init() {
         if (dynamicTexture != null) dynamicTexture.close();
-        dynamicTexture  = new DynamicTexture(width, height, true);
+        dynamicTexture = new DynamicTexture(width, height, true);
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
                 .register("tailor_canvas", dynamicTexture);
@@ -148,7 +148,7 @@ public class PixelCanvas {
                 int a = (argb >> 24) & 0xFF;
                 int r = (argb >> 16) & 0xFF;
                 int g = (argb >>  8) & 0xFF;
-                int b =  argb        & 0xFF;
+                int b =  argb & 0xFF;
                 img.setPixelRGBA(x, y, (a << 24) | (b << 16) | (g << 8) | r);
             }
         }

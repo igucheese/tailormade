@@ -20,8 +20,8 @@ public record PixelData(int[] pixels) {
                         for (int pixel : data.pixels) buf.writeInt(pixel);
                     },
                     buf -> {
-                        int len    = buf.readVarInt();
-                        int[] arr  = new int[len];
+                        int len = buf.readVarInt();
+                        int[] arr = new int[len];
                         for (int i = 0; i < len; i++) arr[i] = buf.readInt();
                         return new PixelData(arr);
                     }

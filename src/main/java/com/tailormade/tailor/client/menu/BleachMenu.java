@@ -27,10 +27,10 @@ public class BleachMenu extends AbstractContainerMenu {
     public static final int SLOT_BLEACH = 1;
     public static final int BLOCK_SLOT_COUNT = 2;
 
-    public static final int SLOT_ARMOR_X   = 31;
-    public static final int SLOT_ARMOR_Y   = 12;
-    public static final int SLOT_BLEACH_X   = 63;
-    public static final int SLOT_BLEACH_Y   = 12;
+    public static final int SLOT_ARMOR_X = 31;
+    public static final int SLOT_ARMOR_Y = 12;
+    public static final int SLOT_BLEACH_X = 63;
+    public static final int SLOT_BLEACH_Y = 12;
     public static final int INV_1_X = 11;
     public static final int INV_1_Y = 40;
     public static final int INV_2_X = 20;

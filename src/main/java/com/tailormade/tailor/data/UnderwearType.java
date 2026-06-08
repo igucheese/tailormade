@@ -16,8 +16,8 @@ public enum UnderwearType {
     private final boolean coversChest;
 
     UnderwearType(String textureKey, boolean coversChest) {
-        this.textureKey   = textureKey;
-        this.coversChest  = coversChest;
+        this.textureKey = textureKey;
+        this.coversChest = coversChest;
     }
 
     public ResourceLocation getTexture() {

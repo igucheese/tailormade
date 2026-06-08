@@ -99,7 +99,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private boolean isOnEditBox = false;
     private String beforeEyedropperTool = null;
 
-    private float previewYaw   = 235.0f; // 正面が見える初期値
+    private float previewYaw = 235.0f;
     private float previewPitch = 0.0f;
     private double lastDragX;
     private boolean draggingPreview = false;
@@ -109,12 +109,12 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private ItemStack lastPatternStack = ItemStack.EMPTY;
     private TailorTextureCompositor previewCompositor;
 
-    private static final int FACE_LINE_COLOR  = 0x3300DDFF;
+    private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
     public DesignerScreen(DesignerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        this.imageWidth  = GUI_W;
+        this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
     }
 
@@ -126,7 +126,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         refreshCanvas();
 
         int rgbBaseX = leftPos + 14;
-        int rgbY     = topPos  + ED_Y + ED_H + RGB_Y_OFFSET;
+        int rgbY = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
         rBox = makeRgbBox(rgbBaseX, rgbY, "R");
         gBox = makeRgbBox(rgbBaseX + RGB_BOX_W + 6, rgbY, "G");
         bBox = makeRgbBox(rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, "B");
@@ -144,13 +144,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
-        this.nameInput = new EditBox(this.font, leftPos + PV_X + PV_W - 70, topPos  + PV_Y + PV_H - 6, 72, 20, Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
+        this.nameInput = new EditBox(this.font, leftPos + PV_X + PV_W - 70, topPos + PV_Y + PV_H - 6, 72, 20, Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.nameInput.setMaxLength(15);
         this.nameInput.setHint(Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.addRenderableWidget(this.nameInput);
 
         int saveX = leftPos + PV_X + PV_W - 63;
-        int saveY = topPos  + PV_Y + PV_H + 21;
+        int saveY = topPos + PV_Y + PV_H + 21;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
                 .pos(saveX, saveY)
                 .size(65, 24)
@@ -185,8 +185,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return;
         }
 
-        PatternType type  = patternItem.getPatternType(mainStack);
-        int[] size        = type.getTextureSize();
+        PatternType type = patternItem.getPatternType(mainStack);
+        int[] size = type.getTextureSize();
 
         if (canvas != null && canvas.getWidth() == size[0] && canvas.getHeight() == size[1]) return;
         if (canvas != null) canvas.close();
@@ -383,7 +383,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             TailorArmorRenderLayer.setPreviewOverride(tex);
         }
 
-        float savedXRot  = mc.player.getXRot();
+        float savedXRot = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
         mc.player.setXRot(previewPitch);
         mc.player.xRotO = previewPitch;
@@ -393,7 +393,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                     .rotateZ((float) Math.PI)
                     .rotateY((float) Math.toRadians(previewYaw));
             int centerX = leftPos + PV_X + PV_W / 2;
-            int centerY = topPos  + PV_Y + PV_H / 2 + 50;
+            int centerY = topPos + PV_Y + PV_H / 2 + 50;
 
             InventoryScreen.renderEntityInInventory(
                     g,
@@ -452,13 +452,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private void renderRgbLabels(GuiGraphics g) {
         int ly = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
         g.drawString(font, "R", leftPos + 8, ly + 1, 0xFFFFFF, false);
-        g.drawString(font, "G", leftPos + 8 + RGB_BOX_W  + 6, ly + 1, 0xFFFFFF, false);
+        g.drawString(font, "G", leftPos + 8 + RGB_BOX_W + 6, ly + 1, 0xFFFFFF, false);
         g.drawString(font, "B", leftPos + 8 + (RGB_BOX_W * 2) + 12, ly + 1, 0xFFFFFF, false);
     }
 
     private void renderUnsavedWarning(GuiGraphics g) {
         int wx = leftPos + imageWidth  / 2 - 64;
-        int wy = topPos  + imageHeight / 2 - 22;
+        int wy = topPos + imageHeight / 2 - 22;
 
         g.fill(wx - 4, wy - 4, wx + 132, wy + 48, 0xDD000000);
         g.drawString(font, Component.translatable("gui.tailormade.designer.warning.title").getString(), wx, wy, 0xFF5555, false);
@@ -491,7 +491,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             palette.setRgb(
                     (picked >> 16) & 0xFF,
                     (picked >>  8) & 0xFF,
-                    picked        & 0xFF
+                    picked & 0xFF
             );
             syncRgbBoxesFromPalette();
             return true;
@@ -538,7 +538,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             beforeEyedropperTool = TOOL_MODE;
             TOOL_MODE = "eyedropper";
         }
-        System.out.println("[CHECK][BRUSH SIZE]" + BRUSH_SIZE + " " + TOOL_MODE);
     }
 
     @Override
@@ -548,8 +547,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return true;
         }
         if (button == 0 && dragStartX >= 0) {
-            previewYaw   += (float)(mx - dragStartX) * 1.0f;
-            previewPitch  = Math.clamp(
+            previewYaw += (float)(mx - dragStartX) * 1.0f;
+            previewPitch = Math.clamp(
                     previewPitch + (float)(my - dragStartY) * 0.5f,
                     -180.0f, 180.0f
             );
@@ -589,24 +588,20 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
 
         float oldScale = currentScale();
-        float minZoom = 1.0f;  // fitScale 相当が縮小限界
+        float minZoom = 1.0f;
         float newZoom = Math.max(minZoom, zoomScale + (dy > 0 ? 0.25f : -0.25f));
 
-        // ズーム限界（16x16 が表示できる程度）
         float maxZoom = Math.min(ED_W, ED_H) / 16.0f / fitScale();
         newZoom = Math.min(newZoom, maxZoom);
 
         float newScale = fitScale() * newZoom;
         float scaleDelta = newScale / oldScale;
 
-        // マウス位置を中心に拡縮
         int[] rxy = currentRenderXY();
         panOffsetX = (float)(mx - (mx - rxy[0]) * scaleDelta - (leftPos + ED_X + (ED_W - canvas.getWidth() * newScale) / 2));
-        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos  + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
+        panOffsetY = (float)(my - (my - rxy[1]) * scaleDelta - (topPos + ED_Y + (ED_H - canvas.getHeight() * newScale) / 2));
 
         zoomScale = newZoom;
-
-        // 縮小限界ではオフセットをリセット
         if (zoomScale <= 1.0f) { panOffsetX = 0; panOffsetY = 0; }
 
         return true;
@@ -644,8 +639,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return true;
         }
 
-        boolean ctrl  = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT)   != 0;
+        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
+        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
         if (ctrl && keyCode == GLFW.GLFW_KEY_Z) {
             if (canvas == null) return true;
             if (shift) {
@@ -653,7 +648,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             } else {
                 canvas.undo();
             }
-            hasUnsavedChanges = canvas.canUndo(); // Undo 履歴が空なら未保存フラグも落とす
+            hasUnsavedChanges = canvas.canUndo();
             return true;
         }
 
@@ -675,7 +670,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private boolean handleWarningClick(double mx, double my) {
         int wx = leftPos + imageWidth  / 2 - 64;
-        int wy = topPos  + imageHeight / 2 - 22;
+        int wy = topPos + imageHeight / 2 - 22;
         if (inBox(mx, my, wx, wy + 26, 58, 12)) {
             hasUnsavedChanges = false;
             super.onClose();
@@ -690,10 +685,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private void applyBrush(double mx, double my) {
         if (canvas == null) return;
-        float scale  = currentScale();
-        int[] rxy    = currentRenderXY();
-        int renderX  = rxy[0];
-        int renderY  = rxy[1];
+        float scale = currentScale();
+        int[] rxy = currentRenderXY();
+        int renderX = rxy[0];
+        int renderY = rxy[1];
 
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
@@ -708,7 +703,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             int color = canvas.getPixel(px[0], px[1]);
             palette.setSelectedColor(color);
             palette.syncRgbFromColor();
-            System.out.println("[CHECK][EYEDROPPER] " + color + ", R : " + palette.getRValue() + ", G : " + palette.getGValue() + ", B : " + palette.getBValue());
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
@@ -720,7 +714,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
         }
         hasUnsavedChanges = true;
-        wasPaintingStroke  = true;
+        wasPaintingStroke = true;
     }
 
     private int[] screenToPixel(int mx, int my, int renderX, int renderY, float scale) {
@@ -740,11 +734,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private int[] currentRenderXY() {
-        float scale  = currentScale();
-        int renderW  = (int)(canvas.getWidth()  * scale);
-        int renderH  = (int)(canvas.getHeight() * scale);
-        int baseX    = leftPos + ED_X + (ED_W - renderW) / 2;
-        int baseY    = topPos  + ED_Y + (ED_H - renderH) / 2;
+        float scale = currentScale();
+        int renderW = (int)(canvas.getWidth()  * scale);
+        int renderH = (int)(canvas.getHeight() * scale);
+        int baseX = leftPos + ED_X + (ED_W - renderW) / 2;
+        int baseY = topPos + ED_Y + (ED_H - renderH) / 2;
         return new int[]{
                 (int)(baseX + panOffsetX),
                 (int)(baseY + panOffsetY)

@@ -43,7 +43,7 @@ public class BleachScreen extends AbstractContainerScreen<BleachMenu> {
 
     public BleachScreen(BleachMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        this.imageWidth  = GUI_W;
+        this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
     }
 
@@ -52,7 +52,7 @@ public class BleachScreen extends AbstractContainerScreen<BleachMenu> {
         super.init();
 
         int btnX = leftPos + 40;
-        int btnY = topPos  + 80;
+        int btnY = topPos + 80;
 
         confirmButton = Button.builder(Component.translatable("gui.tailormade.modal.confirm"), btn -> onConfirm()).pos(btnX, btnY).size(BTN_W, BTN_H).build();
         addRenderableWidget(confirmButton);

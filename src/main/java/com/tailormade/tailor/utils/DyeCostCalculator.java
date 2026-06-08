@@ -25,7 +25,7 @@ public final class DyeCostCalculator {
 
             sumR += (argb >> 16) & 0xFF;
             sumG += (argb >>  8) & 0xFF;
-            sumB +=  argb        & 0xFF;
+            sumB +=  argb & 0xFF;
         }
 
         double divisor = 255.0 * total;

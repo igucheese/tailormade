@@ -29,7 +29,7 @@ public class HueBarWidget {
 
     public void init() {
         if (texture != null) texture.close();
-        texture         = new DynamicTexture(W, H, true);
+        texture = new DynamicTexture(W, H, true);
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
                 .register("tailormade_huebar_widget", texture);
@@ -49,7 +49,7 @@ public class HueBarWidget {
             int rgb = hsvToRgb(hue, 1f, 1f);
             int r = (rgb >> 16) & 0xFF;
             int g = (rgb >>  8) & 0xFF;
-            int b =  rgb        & 0xFF;
+            int b =  rgb & 0xFF;
 
             for (int px = 0; px < W; px++) {
                 img.setPixelRGBA(px, py, (0xFF << 24) | (b << 16) | (g << 8) | r);
@@ -87,8 +87,8 @@ public class HueBarWidget {
     }
 
     private void pick(int py) {
-        cursorY      = Math.clamp(py, 0, H - 1);
-        selectedHue  = (int)((float) cursorY / (H - 1) * 359f);
+        cursorY = Math.clamp(py, 0, H - 1);
+        selectedHue = (int)((float) cursorY / (H - 1) * 359f);
     }
 
     private boolean inBounds(double mx, double my) {
@@ -109,17 +109,17 @@ public class HueBarWidget {
     }
 
     private static int hsvToRgb(float h, float s, float v) {
-        float c  = v * s;
-        float x  = c * (1f - Math.abs((h / 60f) % 2f - 1f));
-        float m  = v - c;
+        float c = v * s;
+        float x = c * (1f - Math.abs((h / 60f) % 2f - 1f));
+        float m = v - c;
 
         float r, g, b;
-        if      (h < 60)  { r = c; g = x; b = 0; }
+        if (h < 60)  { r = c; g = x; b = 0; }
         else if (h < 120) { r = x; g = c; b = 0; }
         else if (h < 180) { r = 0; g = c; b = x; }
         else if (h < 240) { r = 0; g = x; b = c; }
         else if (h < 300) { r = x; g = 0; b = c; }
-        else              { r = c; g = 0; b = x; }
+        else { r = c; g = 0; b = x; }
 
         return ((int)((r + m) * 255) << 16)
                 | ((int)((g + m) * 255) << 8)

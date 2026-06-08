@@ -110,8 +110,8 @@ public class MannequinEntity extends LivingEntity {
         ItemStack held = player.getItemInHand(hand);
 
         if (!held.isEmpty() && held.getItem() instanceof ArmorItem armor) {
-            EquipmentSlot slot    = armor.getEquipmentSlot();
-            ItemStack     current = getItemBySlot(slot);
+            EquipmentSlot slot = armor.getEquipmentSlot();
+            ItemStack current = getItemBySlot(slot);
 
             if (!current.isEmpty() && !player.getInventory().add(current)) {
                 player.drop(current, false);

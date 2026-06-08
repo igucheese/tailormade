@@ -36,9 +36,9 @@ public class ModNetworking {
                 SaveSkinLayerPayloadHandler::handle
         );
         registrar.playToServer(
-                SaveUnderwarePayload.TYPE,
-                SaveUnderwarePayload.STREAM_CODEC,
-                SaveUnderwarePayload::handle
+                SaveUnderwearPayload.TYPE,
+                SaveUnderwearPayload.STREAM_CODEC,
+                SaveUnderwearPayload::handle
         );
         registrar.playToServer(
                 ConfirmBleachPayload.TYPE,
@@ -55,9 +55,9 @@ public class ModNetworking {
                 SyncSkinLayerPayload::handle
         );
         registrar.playToClient(
-                SyncUnderwarePayload.TYPE,
-                SyncUnderwarePayload.STREAM_CODEC,
-                SyncUnderwarePayload::handle
+                SyncUnderwearPayload.TYPE,
+                SyncUnderwearPayload.STREAM_CODEC,
+                SyncUnderwearPayload::handle
         );
         registrar.playToClient(
                 SyncDesignPayload.TYPE,

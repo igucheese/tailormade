@@ -44,8 +44,8 @@ public class ClientRenderEvents {
             for (int i = 0; i < layers.size(); i++) {
                 if (!(layers.get(i) instanceof HumanoidArmorLayer<?, ?, ?> original)) continue;
 
-                HumanoidModel innerModel  = original.innerModel;
-                HumanoidModel outerModel  = original.outerModel;
+                HumanoidModel innerModel = original.innerModel;
+                HumanoidModel outerModel = original.outerModel;
                 ModelManager  modelManager = Minecraft.getInstance().getModelManager();
 
                 layers.set(i, new TailorHumanoidArmorLayer(
