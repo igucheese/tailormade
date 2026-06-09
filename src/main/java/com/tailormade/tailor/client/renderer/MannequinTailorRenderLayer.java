@@ -5,6 +5,7 @@ import com.tailormade.tailor.client.model.MannequinModel;
 import com.tailormade.tailor.data.PatternType;
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
 import com.tailormade.tailor.registries.ModDataComponents;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -17,33 +18,46 @@ import net.minecraft.world.entity.EquipmentSlot;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, MannequinModel> {
-    private final MannequinModel layerModel;
     public MannequinTailorRenderLayer(RenderLayerParent<MannequinEntity, MannequinModel> parent, EntityRendererProvider.Context ctx) {
         super(parent);
-        this.layerModel = new MannequinModel(ctx.bakeLayer(MannequinModel.LAYER_LOCATION));
     }
 
     @Override
     public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, MannequinEntity entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
-        Map<PatternType, int[]> pixelMap = collectPixelData(entity);
-        if (pixelMap.isEmpty()) return;
-        TailorTextureCompositor compositor = TailorTextureCompositor.getOrCreate(entity.getUUID());
-
-        ResourceLocation texture = compositor.composeForPreview(pixelMap);
-        if (texture == null) return;
+        int fullLight = LightTexture.pack(15, 15);
 
         poseStack.pushPose();
         poseStack.scale(1.001F, 1.001F, 1.001F);
-        layerModel.setupAnim(entity, 0, 0, 0, 0, 0);
-        layerModel.renderToBuffer(
+
+        getParentModel().renderToBuffer(
                 poseStack,
-                bufferSource.getBuffer(RenderType.entityCutoutNoCull(texture)),
-                packedLight,
+                bufferSource.getBuffer(RenderType.entityCutoutNoCull(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "textures/block/mannequin.png")
+                )),
+                fullLight,
                 OverlayTexture.NO_OVERLAY
         );
+
+        Map<PatternType, int[]> pixelMap = collectPixelData(entity);
+        if (!pixelMap.isEmpty()) {
+            TailorTextureCompositor compositor = TailorTextureCompositor.getOrCreate(entity.getUUID());
+
+            ResourceLocation texture = compositor.composeForPreview(pixelMap);
+            if (texture == null) return;
+            poseStack.pushPose();
+            poseStack.scale(1.004F, 1.004F, 1.004F);
+            getParentModel().renderToBuffer(
+                    poseStack,
+                    bufferSource.getBuffer(RenderType.entityCutoutNoCull(texture)),
+                    fullLight,
+                    OverlayTexture.NO_OVERLAY
+            );
+            poseStack.popPose();
+        }
         poseStack.popPose();
     }
 
