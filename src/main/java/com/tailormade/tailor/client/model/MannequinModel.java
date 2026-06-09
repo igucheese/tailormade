@@ -30,7 +30,7 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
     private final ModelPart rightPants;
     private final ModelPart leftPants;
 
-    private static float overlaySize = 0.1F;
+    private static float overlaySize = 0.5F;
 
     public MannequinModel(ModelPart root) {
         this.head = root.getChild("head");
@@ -58,27 +58,27 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
 
         root.addOrReplaceChild("body",
                 CubeListBuilder.create()
-                        .texOffs(16, 16).addBox(-4F, 0F, -2F, 8, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(0, 16).addBox(-4F, 0F, -2F, 8, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(0F, 0F, 0F));
 
         root.addOrReplaceChild("leftArm",
                 CubeListBuilder.create()
-                        .texOffs(32, 48).addBox(-3F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(0, 32).addBox(-3F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(-5F, 2F, 0F));
 
         root.addOrReplaceChild("rightArm",
                 CubeListBuilder.create()
-                        .texOffs(40, 16).addBox(-1F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(24, 16).addBox(-1F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(5F, 2F, 0F));
 
         root.addOrReplaceChild("rightLeg",
                 CubeListBuilder.create()
-                        .texOffs(0, 16).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(16, 32).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(2F, 12F, 0F));
 
         root.addOrReplaceChild("leftLeg",
                 CubeListBuilder.create()
-                        .texOffs(16, 48).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(32, 0).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(-2F, 12F, 0F));
 
         root.addOrReplaceChild("hat",
@@ -115,7 +115,67 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
     }
 
     @Override
-    public void setupAnim(MannequinEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {}
+    public void setupAnim(MannequinEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        resetPose();
+        switch (entity.getMannequinPose()) {
+            case ATTENTION -> applyAttention();
+            case HANDS_ON_HIPS -> applyHandsOnHips();
+            case ONE_ARM_UP -> applyOneArmUp();
+            case WALK -> applyWalk();
+            default -> {}
+        }
+        syncOverlay();
+    }
+
+    private void resetPose() {
+        head.xRot = head.yRot = head.zRot = 0F;
+        body.xRot = body.yRot = body.zRot = 0F;
+        rightArm.xRot = rightArm.yRot = rightArm.zRot = 0F;
+        leftArm.xRot = leftArm.yRot = leftArm.zRot = 0F;
+        rightLeg.xRot = rightLeg.yRot = rightLeg.zRot = 0F;
+        leftLeg.xRot = leftLeg.yRot = leftLeg.zRot = 0F;
+    }
+
+    private void copyRotation(ModelPart src, ModelPart dst) {
+        dst.xRot = src.xRot;
+        dst.yRot = src.yRot;
+        dst.zRot = src.zRot;
+    }
+
+    private void syncOverlay() {
+        copyRotation(head, hat);
+        copyRotation(body, jacket);
+        copyRotation(rightArm, rightSleeve);
+        copyRotation(leftArm, leftSleeve);
+        copyRotation(rightLeg, rightPants);
+        copyRotation(leftLeg, leftPants);
+    }
+
+    private void applyAttention() {
+        rightArm.zRot = -0.1F;
+        leftArm.zRot = 0.1F;
+    }
+
+    private void applyHandsOnHips() {
+        rightArm.zRot = 0.9F;
+        rightArm.xRot = -0.4F;
+        leftArm.zRot = -0.9F;
+        leftArm.xRot = -0.4F;
+    }
+
+    private void applyOneArmUp() {
+        rightArm.xRot = -(float)(Math.PI * 0.85);
+        rightArm.zRot = 0.1F;
+        leftArm.zRot = -0.08F;
+        leftArm.xRot = 0.08F;
+    }
+
+    private void applyWalk() {
+        rightArm.xRot = 0.3F;
+        leftArm.xRot = -0.3F;
+        leftLeg.xRot = 0.2F;
+        rightLeg.xRot = -0.2F;
+    }
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {

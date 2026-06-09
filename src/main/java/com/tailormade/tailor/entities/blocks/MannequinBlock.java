@@ -34,6 +34,11 @@ public class MannequinBlock extends Block {
     public MannequinBlock(Properties properties) {
         super(
                 properties.noOcclusion()
+                        .noCollission()
+                        .isValidSpawn((s, l, p, e) -> false)
+                        .isRedstoneConductor((s, l, p) -> false)
+                        .isSuffocating((s, l, p) -> false)
+                        .isViewBlocking((s, l, p) -> false)
         );
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
@@ -59,12 +64,15 @@ public class MannequinBlock extends Block {
     }
 
     @Override
-    public ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
-                                           BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide()) {
+            double cx = pos.getX() + 0.5;
+            double cy = pos.getY() + 0.5;
+            double cz = pos.getZ() + 0.5;
+
             level.getEntitiesOfClass(MannequinEntity.class,
-                    new AABB(pos).inflate(0.5)
-            ).stream().findFirst().ifPresent(mannequin ->
+                    new AABB(pos).inflate(0.1)
+            ).stream().filter(m -> m.distanceToSqr(cx, cy, cz) < 0.5).findFirst().ifPresent(mannequin ->
                     mannequin.interact(player, hand)
             );
         }
@@ -101,20 +109,23 @@ public class MannequinBlock extends Block {
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide()) {
+            double cx = pos.getX() + 0.5;
+            double cy = pos.getY() + 0.5;
+            double cz = pos.getZ() + 0.5;
             // 周辺のマネキンエンティティを探して装備をドロップ
-            level.getEntitiesOfClass(MannequinEntity.class,
-                    new AABB(pos).inflate(0.25)
-            ).forEach(mannequin -> {
-                for (EquipmentSlot slot : new EquipmentSlot[]{
-                        EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                        EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-                    ItemStack armor = mannequin.getItemBySlot(slot);
-                    if (!armor.isEmpty()) {
-                        Block.popResource(level, pos, armor);
+            level.getEntitiesOfClass(MannequinEntity.class, new AABB(pos).inflate(0.1))
+                .stream().filter(m -> m.distanceToSqr(cx, cy, cz) < 0.5)
+                .forEach(mannequin -> {
+                    for (EquipmentSlot slot : new EquipmentSlot[]{
+                            EquipmentSlot.HEAD, EquipmentSlot.CHEST,
+                            EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+                        ItemStack armor = mannequin.getItemBySlot(slot);
+                        if (!armor.isEmpty()) {
+                            Block.popResource(level, pos, armor);
+                        }
                     }
-                }
-                mannequin.discard();
-            });
+                    mannequin.discard();
+                });
         }
         super.playerWillDestroy(level, pos, state, player);
         return state;

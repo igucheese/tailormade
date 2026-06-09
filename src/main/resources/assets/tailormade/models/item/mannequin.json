@@ -1,5 +1,5 @@
 {
-	"parent": "tailormade:block/mannequin",
+	"parent": "tailormade:block/mannequin.org",
 	"display": {
 		"ground": {
 			"rotation": [0, 0, 0],
@@ -8,7 +8,7 @@
 		},
 		"gui": {
 			"rotation": [ 30, 150, 0 ],
-			"translation": [ 0, 0, 0 ],
+			"translation": [ 0, -2, 0 ],
 			"scale": [ 0.375, 0.375, 0.375 ]
 		}
 	},
