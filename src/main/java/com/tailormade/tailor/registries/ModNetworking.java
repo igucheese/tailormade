@@ -16,7 +16,7 @@ import static com.tailormade.tailor.Tailormade.MODID;
 public class ModNetworking {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("1.0.0"); // プロトコルバージョン
+        final PayloadRegistrar registrar = event.registrar("1.0.0");
         /**
          * Client to Server
          */
