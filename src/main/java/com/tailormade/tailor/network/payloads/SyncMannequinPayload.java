@@ -1,5 +1,6 @@
 package com.tailormade.tailor.network.payloads;
 
+import com.tailormade.tailor.client.ClientHooks;
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import static com.tailormade.tailor.Tailormade.MODID;
+import static com.tailormade.tailor.client.ClientHooks.syncMannequin;
 
 public record SyncMannequinPayload(
         int entityId,
@@ -37,27 +39,9 @@ public record SyncMannequinPayload(
         return TYPE;
     }
 
-    public static void handle(
-            SyncMannequinPayload payload,
-            IPayloadContext context) {
-
+    public static void handle(SyncMannequinPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
-            Level level = Minecraft.getInstance().level;
-            if (level == null) return;
-
-            Entity entity = level.getEntity(payload.entityId());
-            if (!(entity instanceof MannequinEntity mannequin)) return;
-
-            EquipmentSlot slot = EquipmentSlot.values()[payload.slotOrdinal()];
-
-            switch (slot) {
-                case FEET     -> mannequin.armorItems.set(0, payload.stack());
-                case LEGS     -> mannequin.armorItems.set(1, payload.stack());
-                case CHEST    -> mannequin.armorItems.set(2, payload.stack());
-                case HEAD     -> mannequin.armorItems.set(3, payload.stack());
-                case MAINHAND -> mannequin.handItems.set(0, payload.stack());
-                case OFFHAND  -> mannequin.handItems.set(1, payload.stack());
-            }
+            ClientHooks.syncMannequin(payload);
         });
     }
 }

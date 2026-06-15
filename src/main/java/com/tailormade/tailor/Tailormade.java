@@ -18,12 +18,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -76,7 +78,9 @@ public class Tailormade {
         NeoForge.EVENT_BUS.register(this);
         modEventBus.addListener(this::addCreative);
 
-        ClientRenderEvents.register(modEventBus, NeoForge.EVENT_BUS);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            ClientRenderEvents.register(modEventBus, NeoForge.EVENT_BUS);
+        }
 
         modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }
