@@ -7,6 +7,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
+import java.awt.*;
+
 public class ColorPickerWidget {
 
     private static final int SIZE = 16;
@@ -41,6 +43,30 @@ public class ColorPickerWidget {
         this.baseColor = argb;
         rebuildTexture();
         selectedColor = sampleColor(cursorX, cursorY);
+    }
+
+    public void setSelectedColor(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >>  8) & 0xFF;
+        int b =  argb & 0xFF;
+
+        float[] hsb = new float[3];
+        Color.RGBtoHSB(r, g, b, hsb);
+
+        float h = hsb[0];
+        float s = hsb[1];
+        float bv = hsb[2];
+
+        int baseArgb = Color.HSBtoRGB(h, 1.0f, 1.0f);
+        this.baseColor = 0xFF000000 | (baseArgb & 0x00FFFFFF);
+
+        // 彩度・明度からカーソル位置を復元する
+        this.cursorX = Math.clamp((int)(s * (SIZE - 1)), 0, SIZE - 1);
+        this.cursorY = Math.clamp((int)((1.0f - bv) * (SIZE - 1)), 0, SIZE - 1);
+
+        this.selectedColor = argb & 0xFF000000 | (argb & 0x00FFFFFF);
+
+        rebuildTexture();
     }
 
     private void rebuildTexture() {

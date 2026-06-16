@@ -53,6 +53,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/bucket.png");
     private static final ResourceLocation EYEDROPPER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eyedropper.png");
+    private static final ResourceLocation ERASER_ICON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eraser.png");
 
     private static final int GUI_W = 384;
     private static final int GUI_H = 216;
@@ -233,12 +235,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         g.blit(BRUSH_3_ICON, toolBarX, toolBarY + 26, 0, 0, 10, 10, 10, 10);
         g.blit(BUCKET_ICON, toolBarX, toolBarY + 39, 0, 0, 10, 10, 10, 10);
         g.blit(EYEDROPPER_ICON, toolBarX, toolBarY + 52, 0, 0, 10, 10, 10, 10);
+        g.blit(ERASER_ICON, toolBarX, toolBarY + 65, 0, 0, 10, 10, 10, 10);
 
         // アクティブ枠
         int labelBorderColor = 0xFF44FF44;
         int toolBarActiveWidth = 12;
         int tollBarActiveX = toolBarX - 1;
-        int toolBarActiveY = TOOL_MODE == "eyedropper" ? toolBarY + 51 : TOOL_MODE == "bucket" ? toolBarY + 38 : BRUSH_SIZE == 1 ? toolBarY - 1 : BRUSH_SIZE == 2 ? toolBarY + 12 : BRUSH_SIZE == 3 ? toolBarY + 25 : toolBarY - 1;
+        int toolBarActiveY = TOOL_MODE == "eraser" ? toolBarY + 64 : TOOL_MODE == "eyedropper" ? toolBarY + 51 : TOOL_MODE == "bucket" ? toolBarY + 38 : BRUSH_SIZE == 1 ? toolBarY - 1 : BRUSH_SIZE == 2 ? toolBarY + 12 : BRUSH_SIZE == 3 ? toolBarY + 25 : toolBarY - 1;
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 1, labelBorderColor);
         g.fill(tollBarActiveX,  toolBarActiveY + toolBarActiveWidth - 1, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
@@ -274,7 +277,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (hoverPx != null) {
             int hx = renderX + (int)(hoverPx[0] * scale);
             int hy = renderY + (int)(hoverPx[1] * scale);
-            g.fill(hx, hy, hx + (int)scale, hy + (int)scale, 0x55FFFFFF);
+            if (BRUSH_SIZE == 3) {
+                hx -= (int)scale;
+                hy -= (int)scale;
+            }
+            int maxHx = hx + (int)(scale * BRUSH_SIZE);
+            int maxHy = hy + (int)(scale * BRUSH_SIZE);
+            g.fill(hx, hy, maxHx, maxHy, 0x55FFFFFF);
         }
 
         renderFaceGuidelines(g, renderX, renderY, scale);
@@ -537,6 +546,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 52) && my <= (this.topPos + TOOLBAR_Y + 62)) {
             beforeEyedropperTool = TOOL_MODE;
             TOOL_MODE = "eyedropper";
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 65) && my <= (this.topPos + TOOLBAR_Y + 75)) {
+            TOOL_MODE = "eraser";
         }
     }
 
@@ -626,16 +637,25 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
         // エディタ系
         if (keyCode == GLFW.GLFW_KEY_P || keyCode == GLFW.GLFW_KEY_B) {
-            palette.setEraserMode(false);
+            TOOL_MODE = "brush";
             return true;
         } else if (keyCode == GLFW.GLFW_KEY_E) {
-            palette.setEraserMode(true);
+            TOOL_MODE = "eraser";
             return true;
         } else if (keyCode == GLFW.GLFW_KEY_I) {
             TOOL_MODE = "eyedropper";
             return true;
         } else if (keyCode == GLFW.GLFW_KEY_G) {
             TOOL_MODE = "bucket";
+            return true;
+        } else if (keyCode == GLFW.GLFW_KEY_1) {
+            BRUSH_SIZE = 1;
+            return true;
+        } else if (keyCode == GLFW.GLFW_KEY_2) {
+            BRUSH_SIZE = 2;
+            return true;
+        } else if (keyCode == GLFW.GLFW_KEY_3) {
+            BRUSH_SIZE = 3;
             return true;
         }
 
@@ -703,6 +723,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             int color = canvas.getPixel(px[0], px[1]);
             palette.setSelectedColor(color);
             palette.syncRgbFromColor();
+            hueBar.setHueFromColor(color);
+            colorPicker.setSelectedColor(color);
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
@@ -710,7 +732,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (TOOL_MODE == "bucket") {
                 canvas.fill(palette.getSelectedColor());
             } else {
-                canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
+                if (TOOL_MODE == "eraser") {
+                    canvas.erase(px[0], px[1], BRUSH_SIZE);
+                } else {
+                    canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
+                }
             }
         }
         hasUnsavedChanges = true;
