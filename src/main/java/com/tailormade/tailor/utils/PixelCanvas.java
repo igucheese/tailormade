@@ -10,6 +10,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tailormade.tailor.data.Constants.DEFAULT_COLOR;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
@@ -18,6 +19,7 @@ public class PixelCanvas {
 
     public static final int TRANSPARENT = 0x00000000;
     public static final int DEFAULT_COLOR = 0xFFFFFFFF;
+    private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
     private static final int HISTORY_MAX = 20;
 
@@ -43,9 +45,10 @@ public class PixelCanvas {
     public void init() {
         if (dynamicTexture != null) dynamicTexture.close();
         dynamicTexture = new DynamicTexture(width, height, true);
+        String textureName = "tailor_canvas_" + COUNTER.getAndIncrement();
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
-                .register("tailor_canvas", dynamicTexture);
+                .register(textureName, dynamicTexture);
         uploadAll();
         undoStack.push(pixels.clone());
     }

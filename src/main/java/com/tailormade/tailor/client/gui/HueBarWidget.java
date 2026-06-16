@@ -40,6 +40,18 @@ public class HueBarWidget {
         this.H = H;
     }
 
+    public void setHueFromColor(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >>  8) & 0xFF;
+        int b =  argb & 0xFF;
+
+        float[] hsb = new float[3];
+        java.awt.Color.RGBtoHSB(r, g, b, hsb);
+
+        selectedHue = (int)(hsb[0] * 359f);
+        cursorY = Math.clamp((int)(hsb[0] * (H - 1)), 0, H - 1);
+    }
+
     private void rebuildTexture() {
         NativeImage img = texture.getPixels();
         if (img == null) return;
