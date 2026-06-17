@@ -5,13 +5,10 @@ import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
 import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.gui.PowderRoomEditableRegions;
-import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
 import com.tailormade.tailor.data.*;
-import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveSkinLayerPayload;
-import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
 import com.tailormade.tailor.utils.PixelCanvas;
 import net.minecraft.client.Minecraft;
@@ -20,16 +17,15 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +129,7 @@ public class PowderRoomScreen extends Screen {
         previewCompositor = TailorTextureCompositor.createForPreview();
 
         canvas = new PixelCanvas(64, 64);
+        canvas.init();
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -152,7 +149,6 @@ public class PowderRoomScreen extends Screen {
             }
         }
 
-        canvas.init();
         PowderRoomEditableRegions.lockNonEditablePixels(canvas);
         canvas.setIsSkin(true);
 
@@ -191,14 +187,13 @@ public class PowderRoomScreen extends Screen {
         return box;
     }
 
-    private void fillWithSampledSkinColor(net.minecraft.client.player.AbstractClientPlayer player) {
+    private void fillWithSampledSkinColor(AbstractClientPlayer player) {
         int skinColor = 0xFFC8A882;
-
         try {
             var texture = Minecraft.getInstance()
                     .getTextureManager()
                     .getTexture(player.getSkin().texture());
-            if (texture instanceof net.minecraft.client.renderer.texture.DynamicTexture dt && dt.getPixels() != null) {
+            if (texture instanceof DynamicTexture dt && dt.getPixels() != null) {
                 int abgr = dt.getPixels().getPixelRGBA(9, 9);
                 int a = (abgr >> 24) & 0xFF;
                 int b = (abgr >> 16) & 0xFF;
@@ -207,22 +202,7 @@ public class PowderRoomScreen extends Screen {
                 skinColor = (a << 24) | (r << 16) | (g << 8) | b;
             }
         } catch (Exception ignored) {}
-
-        Arrays.fill(canvas.getPixels(), skinColor);
-    }
-
-    private void clearHeadArea() {
-        PatternType head = PatternType.HEAD;
-        for (PatternType.CanvasSegment seg : head.getSegments()) {
-            for (int y = 0; y < seg.h(); y++) {
-                for (int x = 0; x < seg.w(); x++) {
-                    int px = seg.uvX() + x;
-                    int py = seg.uvY() + y;
-                    // canvas は 64x64 のフラット配列
-                    canvas.setPixel(px, py, PixelCanvas.TRANSPARENT, 1);
-                }
-            }
-        }
+        canvas.fill(skinColor);
     }
 
     @Override
@@ -326,6 +306,7 @@ public class PowderRoomScreen extends Screen {
         SkinLayerRenderLayer.setUnderwearPreview(previewUnderwear);
 
         MannequinStylePreviewHelper.setHideArmor(true);
+        SkinLayerRenderLayer.setIsForcePreview(true);
 
         float savedXRot = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
@@ -356,6 +337,7 @@ public class PowderRoomScreen extends Screen {
             mc.player.xRotO = savedXRotO;
             SkinLayerRenderLayer.clearPreview();
             MannequinStylePreviewHelper.setHideArmor(false);
+            SkinLayerRenderLayer.setIsForcePreview(false);
         }
     }
 

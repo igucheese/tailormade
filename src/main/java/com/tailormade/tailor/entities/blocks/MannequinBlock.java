@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -80,9 +81,7 @@ public class MannequinBlock extends Block {
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
-                            net.minecraft.world.entity.LivingEntity placer,
-                            ItemStack stack) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         if (!level.isClientSide()) {
             MannequinEntity mannequin = new MannequinEntity(
                     ModBlockEntities.MANNEQUIN.get(), level);
