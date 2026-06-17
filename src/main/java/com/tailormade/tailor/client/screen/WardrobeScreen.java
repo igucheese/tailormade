@@ -3,31 +3,26 @@ package com.tailormade.tailor.client.screen;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
 import com.tailormade.tailor.client.gui.HueBarWidget;
+import com.tailormade.tailor.client.gui.PowderRoomEditableRegions;
 import com.tailormade.tailor.client.renderer.SkinLayerRenderLayer;
+import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
 import com.tailormade.tailor.client.renderer.UnderwearTextureCompositor;
-import com.tailormade.tailor.data.UnderwearDataClientCache;
-import com.tailormade.tailor.data.UnderwearSetting;
-import com.tailormade.tailor.data.UnderwearType;
+import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.network.payloads.SaveUnderwearPayload;
-import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
+import com.tailormade.tailor.utils.PixelCanvas;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 
@@ -71,7 +66,9 @@ public class WardrobeScreen extends Screen {
     private double dragStartY = -1;
     private Button saveButton;
 
+    private PixelCanvas canvas;
     private UnderwearTextureCompositor underwearCompositor;
+    private TailorTextureCompositor previewCompositor;
     private static final ResourceLocation defaultUnderwearLocation = ResourceLocation.fromNamespaceAndPath(MODID, "textures/underwear/male_boxer.png");
     private ResourceLocation composedTexture = null;
 
@@ -106,6 +103,16 @@ public class WardrobeScreen extends Screen {
             }
         }
 
+        PixelData existingData = SkinDataClientCache.get(mc.player.getUUID());
+        if (existingData == null) {
+            canvas = new PixelCanvas(64, 64);
+            canvas.init();
+            canvas.fill(0xFFC8A882);
+            PowderRoomEditableRegions.lockNonEditablePixels(canvas);
+            canvas.setIsSkin(true);
+        }
+
+        previewCompositor = TailorTextureCompositor.createForPreview();
         underwearCompositor = new UnderwearTextureCompositor();
         underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation);
         applyUnderwearPreview();
@@ -140,12 +147,19 @@ public class WardrobeScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
+        if (canvas != null) {
+            Map<PatternType, int[]> pixelMap = buildPreviewPixelMap();
+            ResourceLocation skinTex = previewCompositor.composeForPreview(pixelMap);
+            SkinLayerRenderLayer.setSkinPreview(skinTex);
+        }
+
         if (composedTexture != null) {
             SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor), composedTexture);
         } else {
             SkinLayerRenderLayer.setUnderwearPreview(new UnderwearSetting(selectedType, selectedColor));
         }
         MannequinStylePreviewHelper.setHideArmor(true);
+        SkinLayerRenderLayer.setIsForcePreview(true);
 
         float savedXRot = mc.player.getXRot();
         float savedXRotO = mc.player.xRotO;
@@ -173,6 +187,7 @@ public class WardrobeScreen extends Screen {
             mc.player.xRotO = savedXRotO;
             SkinLayerRenderLayer.clearPreview();
             MannequinStylePreviewHelper.setHideArmor(false);
+            SkinLayerRenderLayer.setIsForcePreview(false);
         }
     }
 
@@ -263,6 +278,35 @@ public class WardrobeScreen extends Screen {
 
     private boolean inPreviewArea(double mx, double my) {
         return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W && my >= topPos + PV_Y && my < topPos + PV_Y + PV_H;
+    }
+
+    private Map<PatternType, int[]> buildPreviewPixelMap() {
+        Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
+
+        int[] pixels = canvas.getPixels();
+        for (PatternType type : PatternType.values()) {
+            map.put(type, cropPixels(pixels, type));
+        }
+
+        return map;
+    }
+    private int[] cropPixels(int[] full64x64, PatternType type) {
+        int canvasW = type.getCanvasW();
+        int canvasH = type.getCanvasH();
+        int[] canvas = new int[canvasW * canvasH];
+
+        for (PatternType.CanvasSegment seg : type.getSegments()) {
+            for (int y = 0; y < seg.h(); y++) {
+                for (int x = 0; x < seg.w(); x++) {
+                    int srcIdx = (seg.uvY() + y) * 64 + (seg.uvX() + x);
+                    int dstIdx = (seg.canvasY() + y) * type.getCanvasW() + (seg.canvasX() + x);
+                    if (srcIdx < full64x64.length && dstIdx < canvas.length) {
+                        canvas[dstIdx] = full64x64[srcIdx];
+                    }
+                }
+            }
+        }
+        return canvas;
     }
 
     private void applyUnderwearPreview() {
