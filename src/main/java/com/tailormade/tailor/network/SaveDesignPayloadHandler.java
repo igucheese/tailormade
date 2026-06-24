@@ -29,35 +29,29 @@ public class SaveDesignPayloadHandler {
     private static void handleOnMainThread(SaveDesignPayload packet, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer player)) return;
 
-        // 1. DesignerMenu を開いているか
         if (!(player.containerMenu instanceof DesignerMenu menu)) {
             Tailormade.LOGGER.warn(
-                    "SavePattern: {} は DesignerMenu を開いていないのにパケットを送信した",
-                    player.getName().getString()
+                    "SavePattern: DesignerMenu を開いていません"
             );
             return;
         }
 
-        // 2. 指定スロットに PatternItem があるか
-        int slotIndex     = packet.slotIndex();
-        ItemStack stack   = menu.getPatternContainer().getItem(slotIndex);
-
+        int slotIndex = packet.slotIndex();
+        ItemStack stack = menu.getPatternContainer().getItem(slotIndex);
         if (stack.isEmpty() || !(stack.getItem() instanceof PatternItem patternItem)) {
             Tailormade.LOGGER.warn(
-                    "SavePattern: スロット {} に PatternItem がない",
+                    "SavePattern: スロット {} に PatternItem がありません",
                     slotIndex
             );
             return;
         }
 
-        // 3. ピクセルデータのサイズが型紙の部位サイズと一致するか
         int[] incomingPixels = packet.pixelData().pixels();
-        int[] expectedSize   = patternItem.getPatternType(stack).getTextureSize();
-        int expectedLen      = expectedSize[0] * expectedSize[1];
-
+        int[] expectedSize = patternItem.getPatternType(stack).getTextureSize();
+        int expectedLen = expectedSize[0] * expectedSize[1];
         if (incomingPixels.length != expectedLen) {
             Tailormade.LOGGER.warn(
-                    "SavePattern: ピクセルデータのサイズが不正 (expected={}, got={})",
+                    "SavePattern: ピクセルデータのサイズが不正です (期待値={}, 実際の値={})",
                     expectedLen, incomingPixels.length
             );
             return;
@@ -74,21 +68,15 @@ public class SaveDesignPayloadHandler {
         DesignDataRecord newDesign = new DesignDataRecord(
             uuid, new PixelData(incomingPixels), player.getUUID(), packet.name(), type.getType()
         );
-        // デザイン保存
         DesignData.get(player.serverLevel()).addDesign(newDesign);
 
-        // 4. DataComponent に書き込む
-//        stack.set(ModDataComponents.PIXEL_DATA.get(), new PixelData(incomingPixels));
         stack.set(ModDataComponents.PATTERN_ID.get(), newDesign.uuid().toString());
         if (!packet.name().isBlank()) {
             stack.set(ModDataComponents.PATTERN_NAME.get(), packet.name());
             stack.set(DataComponents.CUSTOM_NAME, Component.literal(packet.name()));
         }
 
-        // 5. スロット変更をクライアントに通知（インベントリ同期）
         player.containerMenu.broadcastChanges();
-
-        // キャッシュ通知
         PacketDistributor.sendToAllPlayers(new SyncDesignPayload(uuid, newDesign));
     }
 }

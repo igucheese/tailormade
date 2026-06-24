@@ -20,9 +20,4 @@ public class ClientSetup {
         event.register(ModMenuTypes.TAILOR_MENU.get(), TailorScreen::new);
         event.register(ModMenuTypes.BLEACH_MENU.get(), BleachScreen::new);
     }
-
-    @SubscribeEvent
-    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-//        event.registerBlockEntityRenderer(ModEntities.IMAGE_FRAME.get(), ImageFrameRenderer::new);
-    }
 }

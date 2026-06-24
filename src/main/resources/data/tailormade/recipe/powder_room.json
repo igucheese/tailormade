@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "   ",
+    "BAB",
+    "   "
+  ],
+  "key": {
+    "A": { "tag": "minecraft:planks" },
+    "B": { "tag": "c:dyes" }
+  },
+  "result": {
+    "id": "tailormade:powder_room",
+    "count": 1
+  }
+}

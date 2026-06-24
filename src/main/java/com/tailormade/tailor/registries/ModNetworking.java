@@ -16,7 +16,7 @@ import static com.tailormade.tailor.Tailormade.MODID;
 public class ModNetworking {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("1.0.0"); // プロトコルバージョン
+        final PayloadRegistrar registrar = event.registrar("1.0.0");
         /**
          * Client to Server
          */
@@ -36,9 +36,9 @@ public class ModNetworking {
                 SaveSkinLayerPayloadHandler::handle
         );
         registrar.playToServer(
-                SaveUnderwarePayload.TYPE,
-                SaveUnderwarePayload.STREAM_CODEC,
-                SaveUnderwarePayload::handle
+                SaveUnderwearPayload.TYPE,
+                SaveUnderwearPayload.STREAM_CODEC,
+                SaveUnderwearPayload::handle
         );
         registrar.playToServer(
                 ConfirmBleachPayload.TYPE,
@@ -55,14 +55,19 @@ public class ModNetworking {
                 SyncSkinLayerPayload::handle
         );
         registrar.playToClient(
-                SyncUnderwarePayload.TYPE,
-                SyncUnderwarePayload.STREAM_CODEC,
-                SyncUnderwarePayload::handle
+                SyncUnderwearPayload.TYPE,
+                SyncUnderwearPayload.STREAM_CODEC,
+                SyncUnderwearPayload::handle
         );
         registrar.playToClient(
                 SyncDesignPayload.TYPE,
                 SyncDesignPayload.STREAM_CODEC,
                 SyncDesignPayload::handle
+        );
+        registrar.playToClient(
+                SyncMannequinPayload.TYPE,
+                SyncMannequinPayload.STREAM_CODEC,
+                SyncMannequinPayload::handle
         );
     }
 }

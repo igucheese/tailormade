@@ -14,24 +14,36 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private static final Map<UUID, TailorTextureCompositor> SKIN_CACHE = new HashMap<>();
     private static final Map<UUID, int[]> SKIN_PIXEL_CACHE = new HashMap<>();
     private static final Map<UUID, UnderwearSetting> UNDERWEAR_CACHE = new HashMap<>();
+    private static final Map<UUID, UnderwearTextureCompositor> UNDERWEAR_COMPOSITOR_CACHE = new HashMap<>();
+    private static final Map<UUID, UnderwearType> UNDERWEAR_TYPE_CACHE = new HashMap<>();
 
     private static ResourceLocation skinPreviewOverride = null;
     private static UnderwearSetting underwearPreviewOverride = null;
+    private static ResourceLocation underwearPreviewTexture = null;
+    private static boolean isForcePreview = false;
 
     public static void setSkinPreview(ResourceLocation tex) { skinPreviewOverride = tex; }
-    public static void setUnderwearPreview(UnderwearSetting s) { underwearPreviewOverride = s; }
+    public static void setUnderwearPreview(UnderwearSetting s) {
+        underwearPreviewOverride = s;
+        underwearPreviewTexture = null;
+    }
+    public static void setUnderwearPreview(UnderwearSetting s, ResourceLocation texture) {
+        underwearPreviewOverride = s;
+        underwearPreviewTexture = texture;
+    }
     public static void clearPreview() {
         skinPreviewOverride = null;
         underwearPreviewOverride = null;
+        underwearPreviewTexture = null;
+    }
+    public static void setIsForcePreview(boolean isForced) {
+        isForcePreview = isForced;
     }
 
     public static void invalidateSkin(UUID uuid) {
@@ -54,7 +66,6 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
             return null;
         }
         return data.getPixels();
-//        return SKIN_PIXEL_CACHE.get(uuid);
     }
     public static UnderwearSetting getUnderwearSetting(UUID uuid) {
         UnderwearSetting setting = UnderwearDataClientCache.get(uuid);
@@ -62,7 +73,6 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
             return UnderwearSetting.DEFAULT;
         }
         return setting;
-//        return UNDERWEAR_CACHE.getOrDefault(uuid, UnderwearSetting.DEFAULT);
     }
 
     public SkinLayerRenderLayer(
@@ -71,13 +81,8 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource,
-                       int packedLight, AbstractClientPlayer player,
-                       float limbSwing, float limbSwingAmount,
-                       float partialTick, float ageInTicks,
-                       float netHeadYaw, float headPitch) {
-
-        if (!hasTailorArmor(player)) return;
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, AbstractClientPlayer player, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (!isForcePreview && !hasTailorArmor(player)) return;
 
         ResourceLocation skinTex = resolveSkinTexture(player);
         if (skinTex != null) {
@@ -89,9 +94,8 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
             );
         }
 
-        UnderwearSetting underwear = resolveUnderwear(player);
-        if (underwear != null) {
-            ResourceLocation underwearTex = underwear.type().getTexture();
+        ResourceLocation underwearTex = resolveUnderwearTexture(player);
+        if (underwearTex != null) {
             getParentModel().renderToBuffer(
                     poseStack,
                     bufferSource.getBuffer(RenderType.entityTranslucentCull(underwearTex)),
@@ -104,15 +108,14 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
     private ResourceLocation resolveSkinTexture(AbstractClientPlayer player) {
         if (skinPreviewOverride != null) return skinPreviewOverride;
 
-        UUID  uuid   = player.getUUID();
+        UUID uuid = player.getUUID();
         PixelData data = SkinDataClientCache.get(uuid);
-//        int[] pixels = SKIN_PIXEL_CACHE.get(uuid);
         int[] pixels = data != null ? data.getPixels() : null;
 
-        if (pixels == null || pixels.length != 64 * 64) return null;
-
-        TailorTextureCompositor compositor =
-                SKIN_CACHE.computeIfAbsent(uuid, k -> TailorTextureCompositor.createForPreview());
+        if (pixels == null || pixels.length != 64 * 64) {
+            return null;
+        }
+        TailorTextureCompositor compositor = SKIN_CACHE.computeIfAbsent(uuid, k -> TailorTextureCompositor.createForPreview());
 
         Map<PatternType, int[]> pixelMap = buildSkinPixelMap(player, pixels);
         if (pixelMap.isEmpty()) return null;
@@ -120,27 +123,21 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
         return compositor.composeForPreview(pixelMap);
     }
 
-    private Map<PatternType, int[]> buildSkinPixelMap(
-            AbstractClientPlayer player, int[] full64x64) {
-
+    private Map<PatternType, int[]> buildSkinPixelMap(AbstractClientPlayer player, int[] full64x64) {
         Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
-
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             ItemStack stack = player.getItemBySlot(slot);
-            if (stack.isEmpty() || !stack.has(ModDataComponents.PATTERN_ID.get())) continue;
+            if (!isForcePreview && (stack.isEmpty() || !stack.has(ModDataComponents.PATTERN_ID.get()))) continue;
 
             PatternType type = slotToPatternType(slot);
-            if (type == null) continue;
+            if (!isForcePreview && (type == null)) continue;
 
             int[] canvas = new int[type.getCanvasW() * type.getCanvasH()];
             for (PatternType.CanvasSegment seg : type.getSegments()) {
                 for (int y = 0; y < seg.h(); y++) {
                     for (int x = 0; x < seg.w(); x++) {
-                        int srcIdx  = (seg.uvY() + y) * 64 + (seg.uvX() + x);
-                        int dstIdx  = y * type.getCanvasW() + (seg.canvasX() + x);
+                        int srcIdx = (seg.uvY() + y) * 64 + (seg.uvX() + x);
+                        int dstIdx = (seg.canvasY() + y) * type.getCanvasW() + (seg.canvasX() + x);
                         if (srcIdx < full64x64.length && dstIdx < canvas.length) {
                             canvas[dstIdx] = full64x64[srcIdx];
                         }
@@ -155,13 +152,59 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
     private UnderwearSetting resolveUnderwear(AbstractClientPlayer player) {
         if (underwearPreviewOverride != null) return underwearPreviewOverride;
         return UnderwearDataClientCache.get(player.getUUID());
-//        return UNDERWEAR_CACHE.get(player.getUUID());
     }
 
-    private boolean hasTailorArmor(AbstractClientPlayer player) {
+    private ResourceLocation resolveUnderwearTexture(AbstractClientPlayer player) {
+        Set<EquipmentSlot> activeSlots = isForcePreview ? Set.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET) : getActiveTailorSlots(player);
+        if (activeSlots.isEmpty()) return null;
+
+        if (underwearPreviewOverride != null) {
+            if (underwearPreviewTexture != null) return underwearPreviewTexture;
+            return composeUnderwearTexture(
+                    player.getUUID(),
+                    underwearPreviewOverride,
+                    activeSlots
+            );
+        }
+        UnderwearSetting setting = UnderwearDataClientCache.get(player.getUUID());
+        if (setting == null) return null;
+        return composeUnderwearTexture(player.getUUID(), setting, activeSlots);
+    }
+
+    private Set<EquipmentSlot> getActiveTailorSlots(AbstractClientPlayer player) {
+        Set<EquipmentSlot> slots = new HashSet<>();
         for (EquipmentSlot slot : new EquipmentSlot[]{
                 EquipmentSlot.HEAD, EquipmentSlot.CHEST,
                 EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+            ItemStack stack = player.getItemBySlot(slot);
+            if (!stack.isEmpty() && stack.has(ModDataComponents.PATTERN_ID.get())) {
+                slots.add(slot);
+            }
+        }
+        return slots;
+    }
+
+    private static ResourceLocation composeUnderwearTexture(UUID uuid, UnderwearSetting setting, Set<EquipmentSlot> activeSlots) {
+        UnderwearType currentType = UNDERWEAR_TYPE_CACHE.get(uuid);
+
+        if (currentType != setting.type()) {
+            UnderwearTextureCompositor old = UNDERWEAR_COMPOSITOR_CACHE.remove(uuid);
+            if (old != null) old.close();
+            UNDERWEAR_TYPE_CACHE.put(uuid, setting.type());
+        }
+
+        UnderwearTextureCompositor compositor = UNDERWEAR_COMPOSITOR_CACHE.computeIfAbsent(
+                uuid, k -> {
+                    UnderwearTextureCompositor c = new UnderwearTextureCompositor();
+                    c.init(setting.type().getTexture());
+                    return c;
+                }
+        );
+        return compositor.compose(setting.color(), activeSlots);
+    }
+
+    private boolean hasTailorArmor(AbstractClientPlayer player) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             ItemStack stack = player.getItemBySlot(slot);
             if (!stack.isEmpty() && stack.has(ModDataComponents.PATTERN_ID.get())) return true;
         }
@@ -170,11 +213,11 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
 
     private PatternType slotToPatternType(EquipmentSlot slot) {
         return switch (slot) {
-            case HEAD  -> PatternType.HEAD;
+            case HEAD -> PatternType.HEAD;
             case CHEST -> PatternType.CHEST;
-            case LEGS  -> PatternType.LEGS;
-            case FEET  -> PatternType.FEET;
-            default    -> null;
+            case LEGS -> PatternType.LEGS;
+            case FEET -> PatternType.FEET;
+            default -> null;
         };
     }
 }

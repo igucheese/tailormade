@@ -23,26 +23,19 @@ import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 
 public class BleachMenu extends AbstractContainerMenu {
-
     public static final int SLOT_ARMOR = 0;
     public static final int SLOT_BLEACH = 1;
     public static final int BLOCK_SLOT_COUNT = 2;
 
-    // スロット座標
-    public static final int SLOT_ARMOR_X   = 31;
-    public static final int SLOT_ARMOR_Y   = 12;
-    public static final int SLOT_BLEACH_X   = 63;
-    public static final int SLOT_BLEACH_Y   = 12;
+    public static final int SLOT_ARMOR_X = 31;
+    public static final int SLOT_ARMOR_Y = 12;
+    public static final int SLOT_BLEACH_X = 63;
+    public static final int SLOT_BLEACH_Y = 12;
     public static final int INV_1_X = 11;
     public static final int INV_1_Y = 40;
     public static final int INV_2_X = 20;
     public static final int INV_2_Y = 58;
 
-    /**
-     * スロットのバッキングコンテナ。
-     * SimpleContainer は自前で ContainerListener を管理しているため、
-     * setChanged() → slotsChanged() の通知チェーンが自動的に機能する。
-     */
     private final SimpleContainer slotContainer = new SimpleContainer(BLOCK_SLOT_COUNT) {
         @Override
         public void setChanged() {
@@ -50,8 +43,6 @@ public class BleachMenu extends AbstractContainerMenu {
             BleachMenu.this.slotsChanged(this);
         }
     };
-
-    // ---- コンストラクタ ----------------------------------------
 
     public BleachMenu(int windowId, Inventory playerInv, FriendlyByteBuf buf) {
         this(windowId, playerInv);
@@ -62,8 +53,6 @@ public class BleachMenu extends AbstractContainerMenu {
         addBlockSlots();
         addPlayerInventory(playerInv);
     }
-
-    // ---- スロット定義 ------------------------------------------
 
     private void addBlockSlots() {
         addSlot(new Slot(slotContainer, SLOT_ARMOR, SLOT_ARMOR_X, SLOT_ARMOR_Y) {
@@ -94,17 +83,6 @@ public class BleachMenu extends AbstractContainerMenu {
         }
     }
 
-    // ---- 染料変換 ---------------------------------------------
-
-    /**
-     * SimpleContainer のアイテム変化時に呼ばれる。
-     * 染料スロットにアイテムがあれば消費してタンクに変換する。
-     *
-     * このメソッドが正しく呼ばれる理由:
-     *   Slot.setChanged() → SimpleContainer.setChanged()
-     *   → ContainerListener.containerChanged() （AbstractContainerMenu が登録済み）
-     *   → AbstractContainerMenu.containerChanged() → slotsChanged(container)
-     */
     @Override
     public void slotsChanged(Container container) {
         super.slotsChanged(container);
@@ -122,8 +100,6 @@ public class BleachMenu extends AbstractContainerMenu {
 
         return bleachStack.is(ModItems.BLEACH.get());
     }
-
-    // ---- AbstractContainerMenu 実装 ---------------------------
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {

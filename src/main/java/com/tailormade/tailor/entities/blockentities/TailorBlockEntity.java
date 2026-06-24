@@ -39,14 +39,10 @@ public class TailorBlockEntity extends BlockEntity implements MenuProvider {
         super(ModBlockEntities.TAILOR_BLOCK_ENTITY.get(), pos, state);
     }
 
-    // ---- タンク操作 -------------------------------------------
-
-    /** 指定量を R タンクに加算する。上限でクランプ。 */
     public void addTankR(int amount) { tankR = Math.min(TANK_MAX, tankR + amount); setChanged(); syncToClient(); }
     public void addTankG(int amount) { tankG = Math.min(TANK_MAX, tankG + amount); setChanged(); syncToClient(); }
     public void addTankB(int amount) { tankB = Math.min(TANK_MAX, tankB + amount); setChanged(); syncToClient(); }
 
-    /** コストを差し引く。タンクが足りなければ false を返して何もしない。 */
     public boolean consumeDye(int costR, int costG, int costB) {
         if (tankR < costR || tankG < costG || tankB < costB) return false;
         tankR -= costR;
@@ -60,8 +56,6 @@ public class TailorBlockEntity extends BlockEntity implements MenuProvider {
     public int getTankR() { return tankR; }
     public int getTankG() { return tankG; }
     public int getTankB() { return tankB; }
-
-    // ---- MenuProvider -----------------------------------------
 
     private void syncToClient() {
         if (level != null && !level.isClientSide()) {

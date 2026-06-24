@@ -56,9 +56,6 @@ public class DesignData extends SavedData {
         return data;
     }
 
-    /**
-     * CRUD
-     */
     public void addDesign(DesignDataRecord design) {
         designData.put(design.uuid(), design);
         this.setDirty();
@@ -75,9 +72,6 @@ public class DesignData extends SavedData {
         return designData.get(id);
     }
 
-    /**
-     * UTILS
-     */
     public Collection<DesignDataRecord> index() {
         return designData.values();
     }

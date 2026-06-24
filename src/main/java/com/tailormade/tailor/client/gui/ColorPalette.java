@@ -28,7 +28,7 @@ public class ColorPalette {
     private final int x;
     private final int y;
 
-    private int selectedColor = 0xFF000000; // デフォルト黒
+    private int selectedColor = 0xFF000000;
     private boolean eraserMode = false;
     private boolean isEraserEnabled = true;
 

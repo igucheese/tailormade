@@ -29,33 +29,26 @@ import org.jetbrains.annotations.NotNull;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class TailorMenu extends AbstractContainerMenu {
-
     public static final int SLOT_PATTERN = 0;
-    public static final int SLOT_ARMOR   = 1;
-    public static final int SLOT_DYE_R   = 2;
-    public static final int SLOT_DYE_G   = 3;
-    public static final int SLOT_DYE_B   = 4;
+    public static final int SLOT_ARMOR = 1;
+    public static final int SLOT_DYE_R = 2;
+    public static final int SLOT_DYE_G = 3;
+    public static final int SLOT_DYE_B = 4;
     public static final int BLOCK_SLOT_COUNT = 5;
 
-    // スロット座標（tailor_gui.png に合わせて調整）
     public static final int SLOT_PATTERN_X = 72;
     public static final int SLOT_PATTERN_Y = 28;
-    public static final int SLOT_ARMOR_X   = 104;
-    public static final int SLOT_ARMOR_Y   = 28;
-    public static final int SLOT_DYE_R_X   = 64;
-    public static final int SLOT_DYE_R_Y   = 60;
-    public static final int SLOT_DYE_G_X   = 64;
-    public static final int SLOT_DYE_G_Y   = 76;
-    public static final int SLOT_DYE_B_X   = 64;
-    public static final int SLOT_DYE_B_Y   = 92;
+    public static final int SLOT_ARMOR_X = 104;
+    public static final int SLOT_ARMOR_Y = 28;
+    public static final int SLOT_DYE_R_X = 64;
+    public static final int SLOT_DYE_R_Y = 60;
+    public static final int SLOT_DYE_G_X = 64;
+    public static final int SLOT_DYE_G_Y = 76;
+    public static final int SLOT_DYE_B_X = 64;
+    public static final int SLOT_DYE_B_Y = 92;
     public static final int INV_X = 16;
     public static final int INV_Y = 134;
 
-    /**
-     * スロットのバッキングコンテナ。
-     * SimpleContainer は自前で ContainerListener を管理しているため、
-     * setChanged() → slotsChanged() の通知チェーンが自動的に機能する。
-     */
     private final SimpleContainer slotContainer = new SimpleContainer(BLOCK_SLOT_COUNT) {
         @Override
         public void setChanged() {
@@ -66,11 +59,8 @@ public class TailorMenu extends AbstractContainerMenu {
 
     private final TailorBlockEntity blockEntity;
 
-    // ---- コンストラクタ ----------------------------------------
-
     public TailorMenu(int windowId, Inventory playerInv, FriendlyByteBuf buf) {
-        this(windowId, playerInv,
-                (TailorBlockEntity) playerInv.player.level().getBlockEntity(buf.readBlockPos()));
+        this(windowId, playerInv, (TailorBlockEntity) playerInv.player.level().getBlockEntity(buf.readBlockPos()));
     }
 
     public TailorMenu(int windowId, Inventory playerInv, TailorBlockEntity be) {
@@ -80,10 +70,7 @@ public class TailorMenu extends AbstractContainerMenu {
         addPlayerInventory(playerInv);
     }
 
-    // ---- スロット定義 ------------------------------------------
-
     private void addBlockSlots() {
-        // 型紙スロット
         addSlot(new Slot(slotContainer, SLOT_PATTERN, SLOT_PATTERN_X, SLOT_PATTERN_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -92,7 +79,6 @@ public class TailorMenu extends AbstractContainerMenu {
             }
         });
 
-        // 防具スロット
         addSlot(new Slot(slotContainer, SLOT_ARMOR, SLOT_ARMOR_X, SLOT_ARMOR_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -100,7 +86,6 @@ public class TailorMenu extends AbstractContainerMenu {
             }
         });
 
-        // 染料スロット（各色専用）
         addSlot(new DyeSlot(slotContainer, SLOT_DYE_R, SLOT_DYE_R_X, SLOT_DYE_R_Y, Items.RED_DYE));
         addSlot(new DyeSlot(slotContainer, SLOT_DYE_G, SLOT_DYE_G_X, SLOT_DYE_G_Y, Items.GREEN_DYE));
         addSlot(new DyeSlot(slotContainer, SLOT_DYE_B, SLOT_DYE_B_X, SLOT_DYE_B_Y, Items.BLUE_DYE));
@@ -109,8 +94,7 @@ public class TailorMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory inv) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inv, col + row * 9 + 9,
-                        INV_X + col * 18, INV_Y + row * 18));
+                addSlot(new Slot(inv, col + row * 9 + 9, INV_X + col * 18, INV_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
@@ -118,32 +102,16 @@ public class TailorMenu extends AbstractContainerMenu {
         }
     }
 
-    // ---- 染料変換 ---------------------------------------------
-
-    /**
-     * SimpleContainer のアイテム変化時に呼ばれる。
-     * 染料スロットにアイテムがあれば消費してタンクに変換する。
-     *
-     * このメソッドが正しく呼ばれる理由:
-     *   Slot.setChanged() → SimpleContainer.setChanged()
-     *   → ContainerListener.containerChanged() （AbstractContainerMenu が登録済み）
-     *   → AbstractContainerMenu.containerChanged() → slotsChanged(container)
-     */
     @Override
     public void slotsChanged(Container container) {
         super.slotsChanged(container);
         if (container != slotContainer) return;
-        System.out.println("[CHECK][SLOTS CHANGED" + container);
 
         absorbDye(SLOT_DYE_R, 'R');
         absorbDye(SLOT_DYE_G, 'G');
         absorbDye(SLOT_DYE_B, 'B');
     }
 
-    /**
-     * 指定スロットの染料アイテムをタンクに変換する。
-     * アイテムを全量消費して対応するタンクに加算する。
-     */
     private void absorbDye(int slotIdx, char channel) {
         ItemStack stack = slotContainer.getItem(slotIdx);
         if (stack.isEmpty()) return;
@@ -151,26 +119,22 @@ public class TailorMenu extends AbstractContainerMenu {
         int tank = switch (channel) {
             case 'R' -> blockEntity.getTankR();
             case 'G' -> blockEntity.getTankG();
-            default  -> blockEntity.getTankB();
+            default -> blockEntity.getTankB();
         };
 
-        // タンクが既に満杯なら何もしない
         if (tank >= TailorBlockEntity.TANK_MAX) return;
 
-        // タンクの空き容量から必要なアイテム個数を計算（切り上げ）
-        int space       = TailorBlockEntity.TANK_MAX - tank;
+        int space = TailorBlockEntity.TANK_MAX - tank;
         int itemsNeeded = (int) Math.ceil((double) space / TailorBlockEntity.DYE_PER_ITEM);
-        int itemsToUse  = Math.min(stack.getCount(), itemsNeeded);
+        int itemsToUse = Math.min(stack.getCount(), itemsNeeded);
 
-        // タンクに加算
         int amount = itemsToUse * TailorBlockEntity.DYE_PER_ITEM;
         switch (channel) {
             case 'R' -> blockEntity.addTankR(amount);
             case 'G' -> blockEntity.addTankG(amount);
-            default  -> blockEntity.addTankB(amount);
+            default -> blockEntity.addTankB(amount);
         }
 
-        // 消費した分だけ減らす（余剰はスロットに残る）
         stack.shrink(itemsToUse);
         slotContainer.setItem(slotIdx, stack.isEmpty() ? ItemStack.EMPTY : stack);
     }
@@ -182,8 +146,6 @@ public class TailorMenu extends AbstractContainerMenu {
 
         var pixelData = stack.get(ModDataComponents.PATTERN_ID.get());
         if (pixelData != null) {
-            // 既にカスタムされている防具はそれ以上できない
-            // 染め戻しが必要！
             return false;
         }
         if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem patternItem)) {
@@ -195,31 +157,26 @@ public class TailorMenu extends AbstractContainerMenu {
 
     public static EquipmentSlot patternTypeToEquipmentSlot(PatternType type) {
         return switch (type) {
-            case HEAD  -> EquipmentSlot.HEAD;
+            case HEAD -> EquipmentSlot.HEAD;
             case CHEST -> EquipmentSlot.CHEST;
-            case LEGS  -> EquipmentSlot.LEGS;
-            case FEET  -> EquipmentSlot.FEET;
+            case LEGS -> EquipmentSlot.LEGS;
+            case FEET -> EquipmentSlot.FEET;
         };
     }
 
-    // ---- 仕立て可否判定 ----------------------------------------
-
     public boolean canConfirm() {
         ItemStack patternStack = slotContainer.getItem(SLOT_PATTERN);
-        ItemStack armorStack   = slotContainer.getItem(SLOT_ARMOR);
+        ItemStack armorStack = slotContainer.getItem(SLOT_ARMOR);
 
         if (patternStack.isEmpty() || armorStack.isEmpty()) return false;
         if (!(patternStack.getItem() instanceof PatternItem)) return false;
 
-//        var pixelData = patternStack.get(ModDataComponents.PIXEL_DATA.get());
         var pixelData = getPixelDataFromId(patternStack.get(ModDataComponents.PATTERN_ID.get()));
         if (pixelData == null) return false;
 
         DyeCostCalculator.DyeCost cost = DyeCostCalculator.calculate(pixelData.pixels());
         return cost.canAfford(blockEntity.getTankR(), blockEntity.getTankG(), blockEntity.getTankB());
     }
-
-    // ---- AbstractContainerMenu 実装 ---------------------------
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
@@ -264,8 +221,6 @@ public class TailorMenu extends AbstractContainerMenu {
             }
         }
     }
-
-    // ---- 内部クラス: 染料専用スロット -------------------------
 
     private static class DyeSlot extends Slot {
         private final Item allowedDye;

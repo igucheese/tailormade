@@ -5,8 +5,10 @@ import com.tailormade.tailor.client.model.MannequinModel;
 import com.tailormade.tailor.data.PatternType;
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
 import com.tailormade.tailor.registries.ModDataComponents;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -16,52 +18,55 @@ import net.minecraft.world.entity.EquipmentSlot;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
-public class MannequinTailorRenderLayer
-        extends RenderLayer<MannequinEntity, MannequinModel> {
-
-    public MannequinTailorRenderLayer(
-            RenderLayerParent<MannequinEntity, MannequinModel> parent) {
+public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, MannequinModel> {
+    public MannequinTailorRenderLayer(RenderLayerParent<MannequinEntity, MannequinModel> parent, EntityRendererProvider.Context ctx) {
         super(parent);
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource,
-                       int packedLight, MannequinEntity entity,
-                       float limbSwing, float limbSwingAmount,
-                       float partialTick, float ageInTicks,
-                       float netHeadYaw, float headPitch) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, MannequinEntity entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+        int fullLight = LightTexture.pack(15, 15);
 
-        Map<PatternType, int[]> pixelMap = collectPixelData(entity);
-        if (pixelMap.isEmpty()) return;
-
-        // エンティティごとにコンポジターを持つ（UUID ベースのキャッシュを流用）
-        TailorTextureCompositor compositor =
-                TailorTextureCompositor.getOrCreate(entity.getUUID());
-
-        ResourceLocation texture = compositor.composeForPreview(pixelMap);
-        if (texture == null) return;
+        poseStack.pushPose();
+        poseStack.scale(1.001F, 1.001F, 1.001F);
 
         getParentModel().renderToBuffer(
                 poseStack,
-                bufferSource.getBuffer(RenderType.entityTranslucentCull(texture)),
-                packedLight,
-                OverlayTexture.NO_OVERLAY,
-                0xFFFFFFFF
+                bufferSource.getBuffer(RenderType.entityCutoutNoCull(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "textures/block/mannequin.png")
+                )),
+                fullLight,
+                OverlayTexture.NO_OVERLAY
         );
+
+        Map<PatternType, int[]> pixelMap = collectPixelData(entity);
+        if (!pixelMap.isEmpty()) {
+            TailorTextureCompositor compositor = TailorTextureCompositor.getOrCreate(entity.getUUID());
+
+            ResourceLocation texture = compositor.composeForPreview(pixelMap);
+            if (texture == null) return;
+            poseStack.pushPose();
+            poseStack.scale(1.004F, 1.004F, 1.004F);
+            getParentModel().renderToBuffer(
+                    poseStack,
+                    bufferSource.getBuffer(RenderType.entityCutoutNoCull(texture)),
+                    fullLight,
+                    OverlayTexture.NO_OVERLAY
+            );
+            poseStack.popPose();
+        }
+        poseStack.popPose();
     }
 
     private Map<PatternType, int[]> collectPixelData(MannequinEntity entity) {
         Map<PatternType, int[]> map = new EnumMap<>(PatternType.class);
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
             var stack = entity.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
 
-//            var pd = stack.get(ModDataComponents.PIXEL_DATA.get());
             var pd = getPixelDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
             if (pd == null) continue;
 
