@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " A ",
+    "   "
+  ],
+  "key": {
+    "A": { "item": "minecraft:crafting_table" },
+    "B": { "item": "minecraft:cauldron" }
+  },
+  "result": {
+    "id": "tailormade:bleaching_counter",
+    "count": 1
+  }
+}
