@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " A ",
+    " C "
+  ],
+  "key": {
+    "A": { "item": "minecraft:crafting_table" },
+    "B": { "item": "minecraft:ink_sac" },
+    "C": { "item": "minecraft:paper" }
+  },
+  "result": {
+    "id": "tailormade:designer",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " A ",
+    " B "
+  ],
+  "key": {
+    "A": { "tag": "minecraft:planks" },
+    "B": { "tag": "c:dyes" }
+  },
+  "result": {
+    "id": "tailormade:wardrobe",
+    "count": 1
+  }
+}
