@@ -40,6 +40,7 @@ public class MannequinBlock extends Block {
                         .isRedstoneConductor((s, l, p) -> false)
                         .isSuffocating((s, l, p) -> false)
                         .isViewBlocking((s, l, p) -> false)
+                        .strength(0.0f)
         );
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
