@@ -20,6 +20,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class ConfirmTailorPayloadHandler {
         }
 
         ItemStack armorStack = menu.getSlot(TailorMenu.SLOT_ARMOR).getItem();
+        ItemEnchantments existingEnchantments = armorStack.get(DataComponents.ENCHANTMENTS);
         if (armorStack.isEmpty()) {
             logWarn(player, "防具スロットが空です。");
             return;
@@ -121,6 +123,10 @@ public class ConfirmTailorPayloadHandler {
             flavorTexts.add(Component.translatable("item.tailormade.tailored.serial", thisSerial).withStyle(ChatFormatting.GRAY));
         }
         armorStack.set(DataComponents.LORE, new ItemLore(flavorTexts));
+
+        if (existingEnchantments != null && !existingEnchantments.isEmpty()) {
+            armorStack.set(DataComponents.ENCHANTMENTS, existingEnchantments);
+        }
 
         menu.getSlot(TailorMenu.SLOT_ARMOR).set(ItemStack.EMPTY);
         if (!player.getInventory().add(armorStack)) {
