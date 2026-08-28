@@ -19,7 +19,7 @@ public class DesignData extends SavedData {
     private final Map<UUID, DesignDataRecord> designData = new HashMap<>();
 
     public static DesignData get(ServerLevel level) {
-        DimensionDataStorage storage = level.getDataStorage();
+        DimensionDataStorage storage = level.getServer().overworld().getDataStorage();
         return storage.computeIfAbsent(
                 new SavedData.Factory<>(
                         DesignData::new,
