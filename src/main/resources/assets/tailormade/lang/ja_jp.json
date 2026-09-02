@@ -82,5 +82,9 @@
   "message.tailormade.pattern_manager.open_exported_file": "型紙データを選択してね",
   "message.tailormade.pattern_manager.open_exported_file.filter": "NBTファイル (*.nbt)",
 
-  "command.tailormade.updateAllData.listed": "%s - ID: %s by %s"
+  "command.tailormade.updateAllData.listed": "%s - ID: %s by %s",
+  "command.tailormade.updateAllData.count_merge_required": "オーバーワールド以外に保存されているデータが %s件 検出されました。",
+  "command.tailormade.updateAllData.merged": "オーバーワールド以外に保存されていた %s件 のデータをオーバーワールドデータに保存しました。",
+  "command.tailormade.updateAllData.clean_up": "オーバーワールド以外に保存されていた %s件 のデータを削除しました。",
+  "command.tailormade.updateAllData.clean_up_interrupted": "古いデータのマージ作業前に削除処理を実行しようとしたため、中断しました。"
 }
