@@ -92,10 +92,11 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         renderDyeCostHint(g);
         renderPreview(g, mouseX, mouseY);
 
-        this.nameInput.active = menu.canConfirm();
-        this.serialInput.active = menu.canConfirm();
+        boolean canProceed = menu.canConfirm() && menu.canTailor();
 
-        confirmButton.active = menu.canConfirm();
+        this.nameInput.active = canProceed;
+        this.serialInput.active = canProceed;
+        confirmButton.active = canProceed;
 
         renderTooltip(g, mouseX, mouseY);
     }
@@ -182,7 +183,7 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
     }
 
     private void onConfirm() {
-        if (!menu.canConfirm()) return;
+        if (!menu.canConfirm() || !menu.canTailor()) return;
         String name = this.nameInput.getValue();
         String serial = this.serialInput.getValue();
         String playerName = minecraft.player.getName().getString();

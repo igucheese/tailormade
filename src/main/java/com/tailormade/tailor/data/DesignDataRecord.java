@@ -16,7 +16,8 @@ public record DesignDataRecord(
         PixelData pixelData,
         UUID userId,
         String name,
-        String type
+        String type,
+        boolean isLocked
 ) {
     public CompoundTag save() {
         CompoundTag nbt = new CompoundTag();
@@ -25,6 +26,7 @@ public record DesignDataRecord(
         nbt.putUUID("userId", userId);
         nbt.putString("name", name);
         nbt.putString("type", type);
+        nbt.putBoolean("isLocked", isLocked);
         return nbt;
     }
 
@@ -35,8 +37,19 @@ public record DesignDataRecord(
         UUID userId = nbt.getUUID("userId");
         String name = nbt.getString("name");
         String type = nbt.getString("type");
+        boolean isLocked = nbt.getBoolean("isLocked");
 
-        return new DesignDataRecord(uuid, pixelData, userId, name, type);
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked);
+    }
+
+    public DesignDataRecord withLocked() {
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, true);
+    }
+    public DesignDataRecord withUnlocked() {
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, false);
+    }
+    public DesignDataRecord withName(String newName) {
+        return new DesignDataRecord(uuid, pixelData, userId, newName, type, isLocked);
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DesignDataRecord> STREAM_CODEC = StreamCodec.of(
@@ -46,6 +59,7 @@ public record DesignDataRecord(
                 buf.writeUUID(info.userId());
                 buf.writeUtf(info.name());
                 buf.writeUtf(info.type());
+                buf.writeBoolean(info.isLocked());
             },
             buf -> {
                 return new DesignDataRecord(
@@ -53,7 +67,8 @@ public record DesignDataRecord(
                         PixelData.STREAM_CODEC.decode(buf),
                         buf.readUUID(),
                         buf.readUtf(),
-                        buf.readUtf()
+                        buf.readUtf(),
+                        buf.readBoolean()
                 );
             }
     );

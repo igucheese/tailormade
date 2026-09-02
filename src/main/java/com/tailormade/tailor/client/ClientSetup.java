@@ -2,6 +2,7 @@ package com.tailormade.tailor.client;
 
 import com.tailormade.tailor.client.screen.BleachScreen;
 import com.tailormade.tailor.client.screen.DesignerScreen;
+import com.tailormade.tailor.client.screen.ManagerScreen;
 import com.tailormade.tailor.client.screen.TailorScreen;
 import com.tailormade.tailor.registries.ModMenuTypes;
 import net.neoforged.api.distmarker.Dist;
@@ -19,5 +20,6 @@ public class ClientSetup {
         event.register(ModMenuTypes.DESIGNER_MENU.get(), DesignerScreen::new);
         event.register(ModMenuTypes.TAILOR_MENU.get(), TailorScreen::new);
         event.register(ModMenuTypes.BLEACH_MENU.get(), BleachScreen::new);
+        event.register(ModMenuTypes.MANAGER_MENU.get(), ManagerScreen::new);
     }
 }

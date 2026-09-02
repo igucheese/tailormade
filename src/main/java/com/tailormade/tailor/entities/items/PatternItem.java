@@ -1,5 +1,7 @@
 package com.tailormade.tailor.entities.items;
 
+import com.tailormade.tailor.data.DesignDataClientCache;
+import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.PatternType;
 import com.tailormade.tailor.data.PixelData;
 import com.tailormade.tailor.registries.ModDataComponents;
@@ -14,6 +16,7 @@ import net.minecraft.world.item.TooltipFlag;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.tailormade.tailor.data.PatternType.*;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
@@ -55,6 +58,10 @@ public class PatternItem extends Item {
         }
         if (patternId != null) {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
+            DesignDataRecord dataRecord = DesignDataClientCache.get(UUID.fromString(patternId));
+            if (dataRecord.isLocked()) {
+                tooltip.add(Component.translatable("item.tailormade.pattern.description.locked").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
         }
     }
 }

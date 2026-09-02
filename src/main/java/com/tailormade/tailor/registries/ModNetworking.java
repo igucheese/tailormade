@@ -45,6 +45,36 @@ public class ModNetworking {
                 ConfirmBleachPayload.STREAM_CODEC,
                 ConfirmBleachPayloadHandler::handle
         );
+        registrar.playToServer(
+                CopyDesignPayload.TYPE,
+                CopyDesignPayload.STREAM_CODEC,
+                CopyDesignPayload::handle
+        );
+        registrar.playToServer(
+                SavePatternLockPayload.TYPE,
+                SavePatternLockPayload.STREAM_CODEC,
+                SavePatternLockPayload::handle
+        );
+        registrar.playToServer(
+                RenamePatternPayload.TYPE,
+                RenamePatternPayload.STREAM_CODEC,
+                RenamePatternPayload::handle
+        );
+        registrar.playToServer(
+                ExportDesignDataStartPayload.TYPE,
+                ExportDesignDataStartPayload.STREAM_CODEC,
+                ExportDesignDataStartPayload::handle
+        );
+        registrar.playToServer(
+                ExtractDesignPayload.TYPE,
+                ExtractDesignPayload.STREAM_CODEC,
+                ExtractDesignPayload::handle
+        );
+        registrar.playToServer(
+                ChangeManagerMenuTabPayload.TYPE,
+                ChangeManagerMenuTabPayload.STREAM_CODEC,
+                ChangeManagerMenuTabPayload::handle
+        );
 
         /**
          * Server to Client
@@ -68,6 +98,11 @@ public class ModNetworking {
                 SyncMannequinPayload.TYPE,
                 SyncMannequinPayload.STREAM_CODEC,
                 SyncMannequinPayload::handle
+        );
+        registrar.playToClient(
+                ExportDesignDataToClientPayload.TYPE,
+                ExportDesignDataToClientPayload.STREAM_CODEC,
+                ExportDesignDataToClientPayload::handleClient
         );
     }
 }

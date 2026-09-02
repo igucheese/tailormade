@@ -65,6 +65,10 @@ public class ConfirmTailorPayloadHandler {
         } else {
             DesignDataRecord design = DesignData.get(player.serverLevel()).get(UUID.fromString(id));
             pixelData = design != null ? design.pixelData() : null;
+            if (design != null && design.isLocked() && !design.userId().equals(player.getUUID())) {
+                logWarn(player, "使用できない型紙です");
+                return;
+            }
         }
         if (!hasPixelData || pixelData == null) {
             logWarn(player, "型紙に PIXEL_DATA がありません！");

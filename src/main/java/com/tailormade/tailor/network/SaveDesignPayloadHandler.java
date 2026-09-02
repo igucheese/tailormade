@@ -10,9 +10,11 @@ import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.PatternDataSaver;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -28,6 +30,7 @@ public class SaveDesignPayloadHandler {
 
     private static void handleOnMainThread(SaveDesignPayload packet, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer player)) return;
+        ServerLevel level = player.serverLevel();
 
         if (!(player.containerMenu instanceof DesignerMenu menu)) {
             Tailormade.LOGGER.warn(
@@ -45,38 +48,24 @@ public class SaveDesignPayloadHandler {
             );
             return;
         }
-
-        int[] incomingPixels = packet.pixelData().pixels();
-        int[] expectedSize = patternItem.getPatternType(stack).getTextureSize();
-        int expectedLen = expectedSize[0] * expectedSize[1];
-        if (incomingPixels.length != expectedLen) {
-            Tailormade.LOGGER.warn(
-                    "SavePattern: ピクセルデータのサイズが不正です (期待値={}, 実際の値={})",
-                    expectedLen, incomingPixels.length
-            );
-            return;
+        // 既存データチェック
+        if (stack.has(ModDataComponents.PATTERN_ID.get())) {
+            String patternId = stack.get(ModDataComponents.PATTERN_ID.get());
+            DesignDataRecord savedDesign = DesignData.get(level).get(UUID.fromString(patternId));
+            if (savedDesign != null && savedDesign.isLocked() && !savedDesign.userId().equals(player.getUUID())) {
+                Tailormade.LOGGER.warn("SavePattern: ロックされた型紙を編集しようとしています");
+                return;
+            }
         }
 
-        String existingUuid = stack.get(ModDataComponents.PATTERN_ID.get());
-        UUID uuid;
-        if (existingUuid == null || existingUuid.isBlank()) {
-            uuid = UUID.randomUUID();
-        } else {
-            uuid = UUID.fromString(existingUuid);
-        }
-        PatternType type = patternItem.getPatternType(stack);
-        DesignDataRecord newDesign = new DesignDataRecord(
-            uuid, new PixelData(incomingPixels), player.getUUID(), packet.name(), type.getType()
-        );
-        DesignData.get(player.serverLevel()).addDesign(newDesign);
+        boolean isValidSize = PatternDataSaver.isValidSize(stack, packet.pixelData(), patternItem);
+        if (!isValidSize) { return; }
 
-        stack.set(ModDataComponents.PATTERN_ID.get(), newDesign.uuid().toString());
-        if (!packet.name().isBlank()) {
-            stack.set(ModDataComponents.PATTERN_NAME.get(), packet.name());
-            stack.set(DataComponents.CUSTOM_NAME, Component.literal(packet.name()));
+        // 保存実行
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), patternItem, player.getUUID(), packet.name());
+        if (newDesign != null) {
+            player.containerMenu.broadcastChanges();
+            PacketDistributor.sendToAllPlayers(new SyncDesignPayload(newDesign.uuid(), newDesign));
         }
-
-        player.containerMenu.broadcastChanges();
-        PacketDistributor.sendToAllPlayers(new SyncDesignPayload(uuid, newDesign));
     }
 }

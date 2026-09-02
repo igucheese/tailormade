@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "tailormade:block/tailor_manager" },
+		"facing=south": { "model": "tailormade:block/tailor_manager", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/tailor_manager", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/tailor_manager", "y": 90 }
+	}
+}

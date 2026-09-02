@@ -6,6 +6,7 @@ import com.tailormade.tailor.entities.blockentities.TailorBlockEntity;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.registries.ModMenuTypes;
+import com.tailormade.tailor.utils.DesignGuard;
 import com.tailormade.tailor.utils.DyeCostCalculator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -25,6 +26,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
@@ -49,6 +52,8 @@ public class TailorMenu extends AbstractContainerMenu {
     public static final int INV_X = 16;
     public static final int INV_Y = 134;
 
+    private final Player player;
+
     private final SimpleContainer slotContainer = new SimpleContainer(BLOCK_SLOT_COUNT) {
         @Override
         public void setChanged() {
@@ -68,6 +73,7 @@ public class TailorMenu extends AbstractContainerMenu {
         this.blockEntity = be;
         addBlockSlots();
         addPlayerInventory(playerInv);
+        this.player = playerInv.player;
     }
 
     private void addBlockSlots() {
@@ -176,6 +182,18 @@ public class TailorMenu extends AbstractContainerMenu {
 
         DyeCostCalculator.DyeCost cost = DyeCostCalculator.calculate(pixelData.pixels());
         return cost.canAfford(blockEntity.getTankR(), blockEntity.getTankG(), blockEntity.getTankB());
+    }
+
+    public boolean canTailor() {
+        // ここで型紙のロックをチェック
+        // 自分のものでない＆ロックされている型紙は使用不可
+        ItemStack patternStack = slotContainer.getItem(SLOT_PATTERN);
+        if (patternStack.isEmpty()) return false;
+        if (!(patternStack.getItem() instanceof PatternItem)) return false;
+        if (!patternStack.has(ModDataComponents.PATTERN_ID.get())) return false;
+        String patternId = patternStack.get(ModDataComponents.PATTERN_ID.get());
+        if (patternId == null) return false;
+        return DesignGuard.canEdit(UUID.fromString(patternId), this.player.getUUID());
     }
 
     @Override
