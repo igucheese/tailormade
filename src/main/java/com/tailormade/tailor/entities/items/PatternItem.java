@@ -1,9 +1,6 @@
 package com.tailormade.tailor.entities.items;
 
-import com.tailormade.tailor.data.DesignDataClientCache;
-import com.tailormade.tailor.data.DesignDataRecord;
-import com.tailormade.tailor.data.PatternType;
-import com.tailormade.tailor.data.PixelData;
+import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.registries.ModItems;
 import net.minecraft.ChatFormatting;
@@ -57,10 +54,21 @@ public class PatternItem extends Item {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.type." + typeName).withStyle(ChatFormatting.GRAY));
         }
         if (patternId != null) {
-            tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
+//            tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
             DesignDataRecord dataRecord = DesignDataClientCache.get(UUID.fromString(patternId));
             if (dataRecord.isLocked()) {
                 tooltip.add(Component.translatable("item.tailormade.pattern.description.locked").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
+            if (dataRecord.designerId() != null) {
+                UUID searchingId = (!dataRecord.designerId().equals(dataRecord.userId())) ? dataRecord.designerId() : dataRecord.userId();
+                GlobalPlayer playerData = GlobalPlayerCache.get(searchingId);
+                String playerName = null;
+                if (playerData != null) {
+                    playerName = playerData.name();
+                } else {
+                    playerName = dataRecord.designerId().toString();
+                }
+                tooltip.add(Component.translatable("item.tailormade.pattern.description.designer", playerName).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             }
         }
     }

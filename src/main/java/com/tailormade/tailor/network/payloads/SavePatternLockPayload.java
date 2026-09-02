@@ -5,12 +5,15 @@ import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.DesignDataClientCache;
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.PixelData;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.SoundService;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -51,17 +54,25 @@ public record SavePatternLockPayload(UUID patternId, boolean isLocked) implement
 
     public static void handle(SavePatternLockPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
+            if (!(ctx.player() instanceof ServerPlayer player)) return;
             // ロックステータスを保存する
-            ServerLevel level = (ServerLevel) ctx.player().level();
+            ServerLevel level = (ServerLevel) player.level();
             DesignDataRecord design = DesignData.get(level).get(payload.patternId());
             if (design == null) { return; }
+            // ロックされていて、かつ player = design.player ではない場合は弾く
+            if (design.isLocked() && !player.getUUID().equals(design.userId())) {
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+                return;
+            }
             DesignDataRecord newDesign = payload.isLocked() ? design.withLocked() : design.withUnlocked();
             DesignData.get(level).updateDesign(payload.patternId(), newDesign);
 
             System.out.println("[CHECK][SavePatternLockPayload.handle] saved design lock status: " + newDesign);
+            String messageId = payload.isLocked() ? "locked" : "unlocked";
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager." + messageId), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(payload.patternId(), newDesign));
 
-            SoundService.playSound(ctx.player(), SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F);
+            SoundService.playSound(player, SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F);
         });
     }
 }

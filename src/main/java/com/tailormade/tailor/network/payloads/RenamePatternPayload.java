@@ -6,6 +6,7 @@ import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.SoundService;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.FriendlyByteBuf;
@@ -68,12 +69,18 @@ public record RenamePatternPayload(UUID patternId, String name) implements Custo
                         "SavePattern: スロット {} に PatternItem がありません",
                         ManagerMenu.SLOT_PATTERN
                 );
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
                 return;
             }
 
             ServerLevel level = (ServerLevel) ctx.player().level();
             DesignDataRecord design = DesignData.get(level).get(payload.patternId());
             if (design == null) { return; }
+            // ロックされていて、かつ player = design.player ではない場合は弾く
+            if (design.isLocked() && !player.getUUID().equals(design.userId())) {
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+                return;
+            }
             DesignDataRecord newDesign = design.withName(payload.name());
             DesignData.get(level).updateDesign(payload.patternId(), newDesign);
 
@@ -81,6 +88,7 @@ public record RenamePatternPayload(UUID patternId, String name) implements Custo
             stack.set(ModDataComponents.PATTERN_NAME, payload.name());
 
             System.out.println("[CHECK][RenamePatternPayload.handle] saved design name: " + newDesign);
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.renamed"), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(payload.patternId(), newDesign));
 
             SoundService.playSound(ctx.player(), SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F);

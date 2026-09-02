@@ -71,6 +71,11 @@ public class ModNetworking {
                 ExtractDesignPayload::handle
         );
         registrar.playToServer(
+                ImportDesignPayload.TYPE,
+                ImportDesignPayload.STREAM_CODEC,
+                ImportDesignPayload::handle
+        );
+        registrar.playToServer(
                 ChangeManagerMenuTabPayload.TYPE,
                 ChangeManagerMenuTabPayload.STREAM_CODEC,
                 ChangeManagerMenuTabPayload::handle
@@ -103,6 +108,11 @@ public class ModNetworking {
                 ExportDesignDataToClientPayload.TYPE,
                 ExportDesignDataToClientPayload.STREAM_CODEC,
                 ExportDesignDataToClientPayload::handleClient
+        );
+        registrar.playToClient(
+                SyncGlobalPlayerPayload.TYPE,
+                SyncGlobalPlayerPayload.STREAM_CODEC,
+                SyncGlobalPlayerPayload::handle
         );
     }
 }

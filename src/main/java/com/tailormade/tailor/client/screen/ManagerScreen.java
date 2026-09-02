@@ -4,6 +4,7 @@ import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.menu.ManagerMenu;
 import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
+import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.PatternType;
 import com.tailormade.tailor.data.PixelData;
 import com.tailormade.tailor.entities.blockentities.TailorBlockEntity;
@@ -11,18 +12,24 @@ import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.*;
 import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.utils.DyeCostCalculator;
+import com.tailormade.tailor.utils.files.DesignDataNbtImporter;
+import com.tailormade.tailor.utils.files.NativeFileChooser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -38,6 +45,8 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/manager_gui_1.png");
     private static final ResourceLocation BG_2 =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/manager_gui_2.png");
+    private static final ResourceLocation BG_3 =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/manager_gui_3.png");
     private static final ResourceLocation LOCKED_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/pattern_locked_status.png");
 
@@ -62,7 +71,7 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
 
     // タブ用のもろもろ
     private int currentPage = 0;
-    private static final int PAGE_COUNT = 2;
+    private static final int PAGE_COUNT = 3;
     private static final int COPY_BUTTON_X = 128;
     private static final int COPY_BUTTON_Y = 55;
     private static final int RENAME_BUTTON_X = 174;
@@ -71,6 +80,8 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
     private static final int LOCK_BUTTON_Y = 103;
     private static final int EXPORT_BUTTON_X = 170;
     private static final int EXPORT_BUTTON_Y = 103;
+    private static final int SELECT_BUTTON_X = 24;
+    private static final int SELECT_BUTTON_Y = 79;
     private static final int EXTRACT_BUTTON_X = 128;
     private static final int EXTRACT_BUTTON_Y = 96;
     private static final int MiniButtonWidth = 32;
@@ -99,6 +110,14 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_extract.png");
     private static final ResourceLocation BUTTON_EXTRACT_ACTIVE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_extract_a.png");
+    private static final ResourceLocation BUTTON_SELECT =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_select.png");
+    private static final ResourceLocation BUTTON_SELECT_ACTIVE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_select_a.png");
+    private static final ResourceLocation BUTTON_IMPORT =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_import.png");
+    private static final ResourceLocation BUTTON_IMPORT_ACTIVE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/tmb_import_a.png");
 
     private EditBox renameForm;
 
@@ -136,6 +155,8 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             g.blit(BG_1, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
         } else if (this.currentPage == 1) {
             g.blit(BG_2, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
+        } else if (this.currentPage == 2) {
+            g.blit(BG_3, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
         }
     }
 
@@ -144,6 +165,19 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
         if (this.currentPage == 0) {
             if (this.menu.isPatternSet() && this.menu.isLocked()) {
                 g.blit(LOCKED_ICON, LOCK_ICON_X, LOCK_ICON_Y, 0, 0, 16, 16, 16, 16);
+            }
+        } else if (this.currentPage == 2) {
+            if (this.menu.hasImport()) {
+                DesignDataRecord imported = this.menu.getImported();
+                String importedPatternName = imported.name();
+                if (importedPatternName.length() > 6) {
+                    importedPatternName = importedPatternName.substring(0, 6) + "...";
+                }
+                int textWidth = this.font.width(importedPatternName);
+                g.drawString(this.font, importedPatternName, 40 - (textWidth / 2), 56, 0xdfc9a3, false);
+                String typeName = imported.type();
+                int typeWidth = this.font.width(typeName);
+                g.drawString(this.font, typeName, 40 - (typeWidth / 2), 96, 0xdfc9a3, false);
             }
         }
     }
@@ -155,6 +189,19 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
         } else {
             this.renameForm.visible = false;
         }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.renameForm.isFocused()) {
+            if (this.renameForm.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+            if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
+                return false;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     private void renderButton(GuiGraphics g) {
@@ -172,6 +219,11 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             }
         } else if (this.currentPage == 1) {
             g.blit(BUTTON_EXTRACT, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+        } else if (this.currentPage == 2) {
+            g.blit(BUTTON_SELECT, leftPos + SELECT_BUTTON_X, topPos + SELECT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+            if (this.menu.hasImport() && this.menu.canImport()) {
+                g.blit(BUTTON_IMPORT, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+            }
         }
     }
 
@@ -211,6 +263,15 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
         } else if (this.currentPage == 1) {
             if (button == 0 && inExtractBox(mouseX, mouseY)) {
                 this.onExtract();
+                return true;
+            }
+        } else if (this.currentPage == 2) {
+            if (button == 0 && inSelectBox(mouseX, mouseY)) {
+                this.onSelect();
+                return true;
+            }
+            if (button == 0 && inExtractBox(mouseX, mouseY) && this.menu.canImport()) {
+                this.onImport();
                 return true;
             }
         }
@@ -264,6 +325,21 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             } else {
                 g.blit(BUTTON_EXTRACT, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
             }
+        } else if (this.currentPage == 2) {
+            if (inSelectBox(mx, my)) {
+                g.blit(BUTTON_SELECT_ACTIVE, leftPos + SELECT_BUTTON_X, topPos + SELECT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+                return true;
+            } else {
+                g.blit(BUTTON_SELECT, leftPos + SELECT_BUTTON_X, topPos + SELECT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+            }
+            if (this.menu.canImport()) {
+                if (inExtractBox(mx, my)) {
+                    g.blit(BUTTON_IMPORT_ACTIVE, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+                    return true;
+                } else {
+                    g.blit(BUTTON_IMPORT, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, 0, 0, MiniButtonWidth, MiniButtonHeight, MiniButtonWidth, MiniButtonHeight);
+                }
+            }
         }
         return true;
     }
@@ -282,6 +358,9 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
     }
     private boolean inExtractBox(double mx, double my) {
         return inBox(mx, my, leftPos + EXTRACT_BUTTON_X, topPos + EXTRACT_BUTTON_Y, MiniButtonWidth, MiniButtonHeight);
+    }
+    private boolean inSelectBox(double mx, double my) {
+        return inBox(mx, my, leftPos + SELECT_BUTTON_X, topPos + SELECT_BUTTON_Y, MiniButtonWidth, MiniButtonHeight);
     }
 
     private boolean inBox(double mx, double my, int bx, int by, int w, int h) {
@@ -327,11 +406,41 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
     }
 
     private void onExtract() {
+        if (!this.menu.canExtract()) {
+            return;
+        }
         UUID currentPatternId = this.menu.getCurrentExtractPatternId();
         if (currentPatternId == null) { return; }
         PacketDistributor.sendToServer(
                 new ExtractDesignPayload(currentPatternId)
         );
+    }
+
+    private void onSelect() {
+        NativeFileChooser.openNbtFileDialogAsync(selected -> {
+            if (selected == null) {
+                return; // キャンセル or エラー
+            }
+            System.out.println("[CHECK][SELETCED FILE]" + selected);
+            try {
+                CompoundTag tagFromFile = NbtIo.read(selected);
+                if (tagFromFile == null) { return; }
+                DesignDataRecord importedRecord = DesignDataNbtImporter.fromNbt(tagFromFile);
+                System.out.println("[CHECK][SELETCED FILE] importedRecord: " + importedRecord);
+                this.menu.setImportedData(importedRecord);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void onImport() {
+        DesignDataRecord imported = this.menu.getImported();
+        System.out.println("[CHECK][onImport]" + imported);
+        if (!this.menu.canImport() || imported == null) {
+            return;
+        }
+        PacketDistributor.sendToServer(new ImportDesignPayload(imported));
     }
 
     @Override

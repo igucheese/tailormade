@@ -1,4 +1,4 @@
-package com.tailormade.tailor.utils.export;
+package com.tailormade.tailor.utils.files;
 
 import com.tailormade.tailor.data.DesignDataRecord;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +14,7 @@ public class DesignDataNbtExporter {
         tag.putString("name", record.name());
         tag.putString("type", record.type());
         tag.putBoolean("isLocked", record.isLocked());
+        tag.putUUID("designerId", record.designerId());
         return tag;
     }
 }

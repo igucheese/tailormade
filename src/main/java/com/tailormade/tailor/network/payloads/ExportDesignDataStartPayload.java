@@ -2,13 +2,9 @@ package com.tailormade.tailor.network.payloads;
 
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.DesignDataRecord;
-import com.tailormade.tailor.utils.export.DesignDataExportSender;
+import com.tailormade.tailor.utils.files.DesignDataExportSender;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -16,9 +12,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.UUID;
 
 import static com.tailormade.tailor.Tailormade.MODID;

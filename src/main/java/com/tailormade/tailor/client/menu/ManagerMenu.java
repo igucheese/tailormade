@@ -29,7 +29,8 @@ public class ManagerMenu extends AbstractContainerMenu {
     public static final int SLOT_COPY_PATTERN = 1;
     public static final int SLOT_TAILORED_ARMOUR = 2;
     public static final int SLOT_EXTRACT_PATTERN = 3;
-    public static final int BLOCK_SLOT_COUNT = 4;
+    public static final int SLOT_IMPORT_PATTERN = 4;
+    public static final int BLOCK_SLOT_COUNT = 5;
 
     public static final int SLOT_PATTERN_X = 32;
     public static final int SLOT_PATTERN_Y = 64;
@@ -41,6 +42,7 @@ public class ManagerMenu extends AbstractContainerMenu {
     public static final int INV_Y = 144;
 
     private final Player player;
+    private DesignDataRecord imported = null;
 
     // タブ切り替え用データ
     private final ContainerData tabData = new SimpleContainerData(1); // 現在のタブ ID を入れるだけ用
@@ -119,6 +121,14 @@ public class ManagerMenu extends AbstractContainerMenu {
                 return !stack.has(ModDataComponents.PATTERN_ID.get());
             }
         });
+
+        // インポート先の白紙型紙
+        addSlot(new TabOnlySlot(slotContainer, SLOT_IMPORT_PATTERN, SLOT_EXTRACT_PATTERN_X, SLOT_EXTRACT_PATTERN_Y, TAB_IMPORT, tabData) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return !stack.has(ModDataComponents.PATTERN_ID.get());
+            }
+        });
     }
 
     private void addPlayerInventory(Inventory inv) {
@@ -134,7 +144,7 @@ public class ManagerMenu extends AbstractContainerMenu {
 
     public void setTab(int tab) {
         tabData.set(0, tab);
-        System.out.println("[CHECK][ManagerMenu.setTab] " + tab);
+        this.flushImportedData();
     }
 
     @Override
@@ -195,6 +205,22 @@ public class ManagerMenu extends AbstractContainerMenu {
         return (copyStack.getItem() instanceof PatternItem) && !copyStack.has(ModDataComponents.PATTERN_ID.get());
     }
 
+    public boolean canExtract() {
+        ItemStack armorStack = slotContainer.getItem(SLOT_TAILORED_ARMOUR);
+        if (armorStack.isEmpty()) return false;
+        String patternId = armorStack.get(ModDataComponents.PATTERN_ID.get());
+        if (!(armorStack.getItem() instanceof ArmorItem armor)) return false;
+        if (patternId == null) return false;
+
+        ItemStack patternStack = slotContainer.getItem(SLOT_EXTRACT_PATTERN);
+        if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem)) return false;
+
+        // 服が使用しているデザインがロックされたものであり、
+        // プレイヤーがデザインしたものでない場合は
+        // 抽出不可能にしておく
+        return DesignGuard.canEdit(UUID.fromString(patternId), player.getUUID()) && !patternStack.has(ModDataComponents.PATTERN_ID.get());
+    }
+
     private boolean isCompatiblePattern(ItemStack stack) {
         if (!(stack.getItem() instanceof PatternItem pattern)) return false;
 
@@ -205,6 +231,24 @@ public class ManagerMenu extends AbstractContainerMenu {
         if (patternId != null) { return false; }
         PatternType type = pattern.getPatternType(stack);
         return armor.getEquipmentSlot() == TailorMenu.patternTypeToEquipmentSlot(type);
+    }
+
+    public void setImportedData(DesignDataRecord importedData) {
+        this.imported = importedData;
+    }
+    public DesignDataRecord getImported() { return this.imported; }
+    public void flushImportedData() { this.imported = null; }
+
+    public boolean hasImport() {
+        return this.imported != null;
+    }
+    public boolean canImport() {
+        ItemStack patternStack = slotContainer.getItem(SLOT_IMPORT_PATTERN);
+        if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem pattern)) return false;
+        if (this.imported == null) return false;
+        if (!pattern.getPatternType(patternStack).getType().equals(this.imported.type())) return false;
+        return !patternStack.has(ModDataComponents.PATTERN_ID.get());
+
     }
 
     @Override
@@ -227,6 +271,10 @@ public class ManagerMenu extends AbstractContainerMenu {
             }
             if (this.tabData.get(0) == 1) {
                 startIndex = 2;
+                endIndex = 4;
+            }
+            if (this.tabData.get(0) == 2) {
+                startIndex = 4;
             }
             if (!moveItemStackTo(stack, startIndex, endIndex, false))
                 return ItemStack.EMPTY;
@@ -247,6 +295,7 @@ public class ManagerMenu extends AbstractContainerMenu {
     @Override
     public void removed(@NotNull Player player) {
         super.removed(player);
+        this.flushImportedData();
         if (!player.level().isClientSide) {
             for (int i = 0; i < BLOCK_SLOT_COUNT; i++) {
                 ItemStack itemStack = this.getSlot(i).getItem();

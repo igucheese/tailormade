@@ -1,10 +1,12 @@
 package com.tailormade.tailor.network.payloads;
 
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.SoundService;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

@@ -22,6 +22,7 @@ import net.minecraft.world.ContainerListener;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -180,6 +181,19 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
         } finally {
             TailorArmorRenderLayer.clearPreviewOverride();
         }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.nameInput.isFocused() || this.serialInput.isFocused()) {
+            if (this.nameInput.keyPressed(keyCode, scanCode, modifiers) || this.serialInput.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+            if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
+                return false;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     private void onConfirm() {

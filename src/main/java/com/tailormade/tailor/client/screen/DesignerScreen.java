@@ -620,6 +620,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.nameInput.isFocused()) {
+            if (this.nameInput.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+            if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
+                return false;
+            }
+        }
         if (this.isOnEditBox) {
             return super.keyPressed(keyCode, scanCode, modifiers);
         }

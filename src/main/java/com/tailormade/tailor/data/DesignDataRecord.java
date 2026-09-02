@@ -17,7 +17,8 @@ public record DesignDataRecord(
         UUID userId,
         String name,
         String type,
-        boolean isLocked
+        boolean isLocked,
+        UUID designerId // オリジナルのデザイナーUUID。不変。
 ) {
     public CompoundTag save() {
         CompoundTag nbt = new CompoundTag();
@@ -27,6 +28,7 @@ public record DesignDataRecord(
         nbt.putString("name", name);
         nbt.putString("type", type);
         nbt.putBoolean("isLocked", isLocked);
+        nbt.putUUID("designerId", designerId);
         return nbt;
     }
 
@@ -37,19 +39,23 @@ public record DesignDataRecord(
         UUID userId = nbt.getUUID("userId");
         String name = nbt.getString("name");
         String type = nbt.getString("type");
-        boolean isLocked = nbt.getBoolean("isLocked");
+        boolean isLocked = nbt.contains("isLocked") ? nbt.getBoolean("isLocked") : false;
+        UUID designerId = nbt.contains("designerId") ? nbt.getUUID("designerId") : userId;
 
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked);
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked, designerId);
     }
 
     public DesignDataRecord withLocked() {
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, true);
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, true, designerId);
     }
     public DesignDataRecord withUnlocked() {
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, false);
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, false, designerId);
     }
     public DesignDataRecord withName(String newName) {
-        return new DesignDataRecord(uuid, pixelData, userId, newName, type, isLocked);
+        return new DesignDataRecord(uuid, pixelData, userId, newName, type, isLocked, designerId);
+    }
+    public DesignDataRecord withOriginalDesigner(UUID designer) {
+        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked, designer);
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DesignDataRecord> STREAM_CODEC = StreamCodec.of(
@@ -60,6 +66,7 @@ public record DesignDataRecord(
                 buf.writeUtf(info.name());
                 buf.writeUtf(info.type());
                 buf.writeBoolean(info.isLocked());
+                buf.writeUUID(info.designerId());
             },
             buf -> {
                 return new DesignDataRecord(
@@ -68,7 +75,8 @@ public record DesignDataRecord(
                         buf.readUUID(),
                         buf.readUtf(),
                         buf.readUtf(),
-                        buf.readBoolean()
+                        buf.readBoolean(),
+                        buf.readUUID()
                 );
             }
     );

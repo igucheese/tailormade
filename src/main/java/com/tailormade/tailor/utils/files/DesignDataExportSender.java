@@ -1,4 +1,4 @@
-package com.tailormade.tailor.utils.export;
+package com.tailormade.tailor.utils.files;
 
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.network.payloads.ExportDesignDataToClientPayload;

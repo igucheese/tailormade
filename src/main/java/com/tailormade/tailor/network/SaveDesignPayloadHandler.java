@@ -10,6 +10,7 @@ import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.PatternDataSaver;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
@@ -46,6 +47,7 @@ public class SaveDesignPayloadHandler {
                     "SavePattern: スロット {} に PatternItem がありません",
                     slotIndex
             );
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             return;
         }
         // 既存データチェック
@@ -54,6 +56,7 @@ public class SaveDesignPayloadHandler {
             DesignDataRecord savedDesign = DesignData.get(level).get(UUID.fromString(patternId));
             if (savedDesign != null && savedDesign.isLocked() && !savedDesign.userId().equals(player.getUUID())) {
                 Tailormade.LOGGER.warn("SavePattern: ロックされた型紙を編集しようとしています");
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
                 return;
             }
         }
@@ -65,6 +68,7 @@ public class SaveDesignPayloadHandler {
         DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), patternItem, player.getUUID(), packet.name());
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_saved"), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(newDesign.uuid(), newDesign));
         }
     }

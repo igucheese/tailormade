@@ -32,6 +32,10 @@ public class PatternDataSaver {
     }
 
     public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName) {
+        return saveDeign(level, stack, pixelData, patternItem, designer, patternName, designer);
+    }
+
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner) {
         try {
             int[] incomingPixels = pixelData.pixels();
 
@@ -44,7 +48,7 @@ public class PatternDataSaver {
             }
             PatternType type = patternItem.getPatternType(stack);
             DesignDataRecord newDesign = new DesignDataRecord(
-                    uuid, new PixelData(incomingPixels), designer, patternName, type.getType(), false
+                    uuid, new PixelData(incomingPixels), designer, patternName, type.getType(), false, originalDesigner
             );
             DesignData.get(level).addDesign(newDesign);
 

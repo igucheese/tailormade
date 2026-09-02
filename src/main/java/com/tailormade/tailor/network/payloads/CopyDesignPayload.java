@@ -7,6 +7,7 @@ import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.PixelData;
 import com.tailormade.tailor.entities.items.PatternItem;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.PatternDataSaver;
 import com.tailormade.tailor.utils.SoundService;
 import net.minecraft.network.FriendlyByteBuf;
@@ -75,6 +76,7 @@ public record CopyDesignPayload(int slotIndex, UUID patternId) implements Custom
                     "SavePattern: スロット {} に PatternItem がありません",
                     slotIndex
             );
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             return;
         }
         ServerLevel level = player.serverLevel();
@@ -85,19 +87,21 @@ public record CopyDesignPayload(int slotIndex, UUID patternId) implements Custom
         String copiedDesignName = Component.translatable("item.tailormade.pattern.copied", orgData.name()).getString();
         // ロックされていて、かつ player = org.player ではない場合は弾く
         if (orgData.isLocked() && !player.getUUID().equals(orgData.userId())) {
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
             return;
         }
         boolean isValidSize = PatternDataSaver.isValidSize(stack, orgData.pixelData(), patternItem);
         if (!isValidSize) { return; }
 
         // 保存実行
-        // 一旦所有者もとの UUID にしてるけど…コピーした人にしてもいいかも？
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), stack, orgData.pixelData(), patternItem, orgData.userId(), copiedDesignName);
+        // 所有者をコピーした人に変更
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), stack, orgData.pixelData(), patternItem, player.getUUID(), copiedDesignName, orgData.designerId());
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: コピーしたよ！もとのID: {}、コピー品のID: {}",
                     orgData.uuid(), newDesign.uuid()
             );
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.copied"), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(newDesign.uuid(), newDesign));
 
             ItemStack itemStack = menu.getSlot(ManagerMenu.SLOT_COPY_PATTERN).getItem();
