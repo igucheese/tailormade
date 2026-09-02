@@ -21,6 +21,9 @@ public class ModBlocks {
     public static final DeferredBlock<BleachingCounterBlock> BLEACHING_COUNTER = BLOCKS.register("bleaching_counter",
             () -> new BleachingCounterBlock(BlockBehaviour.Properties.of())
     );
+    public static final DeferredBlock<ManagerBlock> MANAGER = BLOCKS.register("tailor_manager",
+            () -> new ManagerBlock(BlockBehaviour.Properties.of())
+    );
 
     public static final DeferredBlock<PowderRoomBlock> POWDER_ROOM = BLOCKS.register("powder_room",
             () -> new PowderRoomBlock(BlockBehaviour.Properties.of())

@@ -31,9 +31,11 @@ public class ModServerEvents {
             Tailormade.LOGGER.info("[SYNC] Starting data sync...");
             ServerLevel level = player.serverLevel();
 
+            addMeIfAbsent(player);
             syncSkinLayer(player);
             syncUnderwearLayer(player);
             syncDesignData(player);
+            syncGlobalPlayers(player);
         }
     }
 

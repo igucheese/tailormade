@@ -26,6 +26,7 @@ public class ModItems {
     public static final DeferredItem<BlockItem> BLEACHING_COUNTER_ITEM = ITEMS.registerSimpleBlockItem("bleaching_counter", BLEACHING_COUNTER);
     public static final DeferredItem<BlockItem> POWDER_ROOM_ITEM = ITEMS.registerSimpleBlockItem("powder_room", POWDER_ROOM);
     public static final DeferredItem<BlockItem> WARDROBE_ITEM = ITEMS.registerSimpleBlockItem("wardrobe", WARDROBE);
+    public static final DeferredItem<BlockItem> MANAGER_ITEM = ITEMS.registerSimpleBlockItem("tailor_manager", MANAGER);
 
     // その他雑貨
     public static final DeferredItem<Item> BLEACH = ITEMS.registerSimpleItem("bleach", new Item.Properties());

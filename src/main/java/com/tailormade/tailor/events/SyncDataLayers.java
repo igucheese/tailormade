@@ -3,8 +3,10 @@ package com.tailormade.tailor.events;
 import com.tailormade.tailor.Tailormade;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
+import com.tailormade.tailor.network.payloads.SyncGlobalPlayerPayload;
 import com.tailormade.tailor.network.payloads.SyncSkinLayerPayload;
 import com.tailormade.tailor.network.payloads.SyncUnderwearPayload;
+import com.tailormade.tailor.utils.GeneralService;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -12,6 +14,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Collection;
 
 public class SyncDataLayers {
+    public static void addMeIfAbsent(ServerPlayer player) {
+        GlobalPlayer storedPlayer = GlobalPlayerSavedData.get(player.serverLevel()).get(player.getUUID());
+        if (storedPlayer == null) {
+            GlobalPlayer toBeStored = GeneralService.composeNewPlayer(player.getUUID(), player.getName().getString());
+            GlobalPlayerSavedData.get(player.serverLevel()).savePlayer(toBeStored);
+        }
+    }
+
     public static void syncSkinLayer(ServerPlayer player) {
         Collection<PixelData> skins = PowderRoomSavedData.get((ServerLevel) player.level()).index();
         for (PixelData skin : skins) {
@@ -42,5 +52,13 @@ public class SyncDataLayers {
             PacketDistributor.sendToPlayer(player, new SyncDesignPayload(design.uuid(), design));
         }
         Tailormade.LOGGER.info("[SYNC_DESIGN] " + designs.size() + " designs have been cached.");
+    }
+
+    public static void syncGlobalPlayers(ServerPlayer player) {
+        Collection<GlobalPlayer> players = GlobalPlayerSavedData.get(player.serverLevel()).index();
+        for (GlobalPlayer p: players) {
+            PacketDistributor.sendToPlayer(player, new SyncGlobalPlayerPayload(p));
+        }
+        Tailormade.LOGGER.info("[SYNC_PLAYERS] " + players.size() + " players' data have been cached.");
     }
 }
