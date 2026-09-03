@@ -94,7 +94,7 @@ public record CopyDesignPayload(int slotIndex, UUID patternId) implements Custom
 
         // 保存実行
         // 所有者をコピーした人に変更
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), stack, orgData.pixelData(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), true, false);
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), stack, orgData.pixelData(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), true, false, false);
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: コピーしたよ！もとのID: {}、コピー品のID: {}",

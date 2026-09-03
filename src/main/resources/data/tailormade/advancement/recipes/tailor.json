@@ -1,0 +1,19 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_stick": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [ { "items": "minecraft:crafting_table" } ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "tailormade:tailor",
+      "tailormade:tailor_manager",
+      "tailormade:designer",
+      "tailormade:bleaching_counter"
+    ]
+  }
+}

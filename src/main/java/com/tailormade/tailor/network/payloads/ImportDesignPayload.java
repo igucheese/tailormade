@@ -79,7 +79,7 @@ public record ImportDesignPayload(DesignDataRecord imported) implements CustomPa
         String name = Component.translatable("item.tailormade.pattern.imported", packet.imported().name()).getString();
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.imported().pixelData(), patternItem, player.getUUID(), name, packet.imported().designerId());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.imported().pixelData(), patternItem, player.getUUID(), packet.imported().name(), packet.imported().designerId(), false, false, true);
         if (newDesign != null) {
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_imported"), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(newDesign.uuid(), newDesign));
