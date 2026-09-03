@@ -2,9 +2,11 @@ package com.tailormade.tailor.network.payloads;
 
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.DesignDataRecord;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.files.DesignDataExportSender;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -41,6 +43,11 @@ public record ExportDesignDataStartPayload(UUID id) implements CustomPacketPaylo
         // デザインレコード取得
         DesignDataRecord record = DesignData.get(level).get(packet.id());
         if (record == null) return;
+        // ロックされていて、かつ player = org.player ではない場合は弾く
+        if (record.isLocked() && !player.getUUID().equals(record.userId())) {
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+            return;
+        }
 
         // エクスポート開始
         DesignDataExportSender.sendToClient(player, record);
