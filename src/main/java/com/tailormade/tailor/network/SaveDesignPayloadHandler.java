@@ -50,14 +50,23 @@ public class SaveDesignPayloadHandler {
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             return;
         }
+
+        // 名前
+        String name = packet.name();
+
         // 既存データチェック
         if (stack.has(ModDataComponents.PATTERN_ID.get())) {
             String patternId = stack.get(ModDataComponents.PATTERN_ID.get());
             DesignDataRecord savedDesign = DesignData.get(level).get(UUID.fromString(patternId));
-            if (savedDesign != null && savedDesign.isLocked() && !savedDesign.userId().equals(player.getUUID())) {
-                Tailormade.LOGGER.warn("SavePattern: ロックされた型紙を編集しようとしています");
-                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
-                return;
+            if (savedDesign != null) {
+                if (name.isBlank()) {
+                    name = savedDesign.name();
+                }
+                if (savedDesign.isLocked() && !savedDesign.userId().equals(player.getUUID())) {
+                    Tailormade.LOGGER.warn("SavePattern: ロックされた型紙を編集しようとしています");
+                    ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+                    return;
+                }
             }
         }
 
@@ -65,7 +74,7 @@ public class SaveDesignPayloadHandler {
         if (!isValidSize) { return; }
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), patternItem, player.getUUID(), packet.name());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), patternItem, player.getUUID(), name);
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_saved"), true);

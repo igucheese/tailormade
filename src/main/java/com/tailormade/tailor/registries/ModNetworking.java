@@ -114,5 +114,10 @@ public class ModNetworking {
                 SyncGlobalPlayerPayload.STREAM_CODEC,
                 SyncGlobalPlayerPayload::handle
         );
+        registrar.playToClient(
+                SyncDesignTemplatePayload.TYPE,
+                SyncDesignTemplatePayload.STREAM_CODEC,
+                SyncDesignTemplatePayload::handle
+        );
     }
 }

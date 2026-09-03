@@ -2,16 +2,15 @@ package com.tailormade.tailor.events;
 
 import com.tailormade.tailor.Tailormade;
 import com.tailormade.tailor.data.*;
-import com.tailormade.tailor.network.payloads.SyncDesignPayload;
-import com.tailormade.tailor.network.payloads.SyncGlobalPlayerPayload;
-import com.tailormade.tailor.network.payloads.SyncSkinLayerPayload;
-import com.tailormade.tailor.network.payloads.SyncUnderwearPayload;
+import com.tailormade.tailor.data.records.DesignTemplate;
+import com.tailormade.tailor.network.payloads.*;
 import com.tailormade.tailor.utils.GeneralService;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
+import java.util.Map;
 
 public class SyncDataLayers {
     public static void addMeIfAbsent(ServerPlayer player) {
@@ -60,5 +59,13 @@ public class SyncDataLayers {
             PacketDistributor.sendToPlayer(player, new SyncGlobalPlayerPayload(p));
         }
         Tailormade.LOGGER.info("[SYNC_PLAYERS] " + players.size() + " players' data have been cached.");
+    }
+
+    public static void syncDesignTemplates(ServerPlayer player) {
+        Map<String, DesignTemplate> templates = TemplateRegistry.getAll();
+        for (DesignTemplate t: templates.values()) {
+            PacketDistributor.sendToPlayer(player, new SyncDesignTemplatePayload(t));
+        }
+        Tailormade.LOGGER.info("[SYNC_TEMPLATES] " + templates.size() + " design templates have been cached.");
     }
 }

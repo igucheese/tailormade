@@ -56,4 +56,18 @@ public class ModDataComponents {
                             .persistent(Codec.STRING)
                             .networkSynchronized(ByteBufCodecs.STRING_UTF8)
                             .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> IS_COPIED =
+            COMPONENTS.register("is_copied",
+                    () -> DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(ByteBufCodecs.BOOL)
+                            .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> IS_EXTRACTED =
+            COMPONENTS.register("is_extracted",
+                    () -> DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(ByteBufCodecs.BOOL)
+                            .build());
 }

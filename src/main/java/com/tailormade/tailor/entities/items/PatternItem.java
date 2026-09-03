@@ -50,6 +50,12 @@ public class PatternItem extends Item {
         } else if (stack.is(ModItems.PATTERN_BOOTS.get())) {
             typeName = "boots";
         }
+        if (stack.has(ModDataComponents.IS_COPIED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_COPIED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.copied").withStyle(ChatFormatting.GRAY));
+        }
+        if (stack.has(ModDataComponents.IS_EXTRACTED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_EXTRACTED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.extracted").withStyle(ChatFormatting.GRAY));
+        }
         if (!typeName.isBlank() && customName != null) {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.type." + typeName).withStyle(ChatFormatting.GRAY));
         }

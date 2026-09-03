@@ -48,7 +48,7 @@ public class DesignerMenu extends AbstractContainerMenu {
 
     private void addPlayerInventory(Inventory inv) {
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(inv, col, 141 + col * 18, 198) {
+            this.addSlot(new Slot(inv, col, 141 + col * 18, 204) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return stack.getItem() instanceof PatternItem;
