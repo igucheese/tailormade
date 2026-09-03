@@ -55,6 +55,7 @@ public class Tailormade {
 
                 output.accept(DESIGNER_ITEM.get());
                 output.accept(TAILOR_ITEM.get());
+                output.accept(MANAGER_ITEM.get());
                 output.accept(BLEACHING_COUNTER_ITEM.get());
                 output.accept(POWDER_ROOM_ITEM.get());
                 output.accept(WARDROBE_ITEM.get());

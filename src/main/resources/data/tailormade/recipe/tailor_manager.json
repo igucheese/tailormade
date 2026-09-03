@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " A ",
+    " B "
+  ],
+  "key": {
+    "A": { "item": "minecraft:loom" },
+    "B": { "item": "minecraft:crafting_table" }
+  },
+  "result": {
+    "id": "tailormade:tailor_manager",
+    "count": 1
+  }
+}

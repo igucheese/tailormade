@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_stick": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [ { "tag": "minecraft:planks" } ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "tailormade:powder_room",
+      "tailormade:wardrobe"
+    ]
+  }
+}

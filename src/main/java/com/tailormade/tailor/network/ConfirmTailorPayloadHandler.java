@@ -10,6 +10,7 @@ import com.tailormade.tailor.entities.blockentities.TailorBlockEntity;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.ConfirmTailorPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.DyeCostCalculator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -20,6 +21,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
@@ -53,6 +55,7 @@ public class ConfirmTailorPayloadHandler {
         ItemStack patternStack = menu.getSlot(TailorMenu.SLOT_PATTERN).getItem();
         if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem patternItem)) {
             logWarn(player, "型紙スロットに PatternItem がありません！");
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             return;
         }
 
@@ -64,15 +67,23 @@ public class ConfirmTailorPayloadHandler {
         } else {
             DesignDataRecord design = DesignData.get(player.serverLevel()).get(UUID.fromString(id));
             pixelData = design != null ? design.pixelData() : null;
+            if (design != null && design.isLocked() && !design.userId().equals(player.getUUID())) {
+                logWarn(player, "使用できない型紙です");
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+                return;
+            }
         }
         if (!hasPixelData || pixelData == null) {
             logWarn(player, "型紙に PIXEL_DATA がありません！");
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.no_pixel_data"), true);
             return;
         }
 
         ItemStack armorStack = menu.getSlot(TailorMenu.SLOT_ARMOR).getItem();
+        ItemEnchantments existingEnchantments = armorStack.get(DataComponents.ENCHANTMENTS);
         if (armorStack.isEmpty()) {
             logWarn(player, "防具スロットが空です。");
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.armor_blank"), true);
             return;
         }
 
@@ -83,11 +94,13 @@ public class ConfirmTailorPayloadHandler {
                     cost.red(), cost.green(), cost.blue(),
                     be.getTankR(), be.getTankG(), be.getTankB()
             ));
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.insufficient_inks"), true);
             return;
         }
 
         if (!be.consumeDye(cost.red(), cost.green(), cost.blue())) {
             logWarn(player, "consumeDye に失敗しました");
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.cosume_ink_failed"), true);
             return;
         }
 
@@ -122,10 +135,15 @@ public class ConfirmTailorPayloadHandler {
         }
         armorStack.set(DataComponents.LORE, new ItemLore(flavorTexts));
 
+        if (existingEnchantments != null && !existingEnchantments.isEmpty()) {
+            armorStack.set(DataComponents.ENCHANTMENTS, existingEnchantments);
+        }
+
         menu.getSlot(TailorMenu.SLOT_ARMOR).set(ItemStack.EMPTY);
         if (!player.getInventory().add(armorStack)) {
             player.drop(armorStack, false);
         }
+        ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.tailored"), true);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);
 

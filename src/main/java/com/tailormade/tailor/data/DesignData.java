@@ -17,8 +17,25 @@ import java.util.UUID;
 public class DesignData extends SavedData {
     private static final String NAME = "tailormade_design_data_registry";
     private final Map<UUID, DesignDataRecord> designData = new HashMap<>();
+    private int version = 10000;
 
     public static DesignData get(ServerLevel level) {
+        DimensionDataStorage storage = level.getServer().overworld().getDataStorage();
+        return storage.computeIfAbsent(
+                new SavedData.Factory<>(
+                        DesignData::new,
+                        DesignData::load,
+                        DataFixTypes.LEVEL
+                ),
+                NAME
+        );
+    }
+
+    /**
+     * 後方互換性のための便宜的メソッド
+     * そのうち消したい
+     */
+    public static DesignData getByLevel(ServerLevel level) {
         DimensionDataStorage storage = level.getDataStorage();
         return storage.computeIfAbsent(
                 new SavedData.Factory<>(
@@ -38,6 +55,7 @@ public class DesignData extends SavedData {
             listTag.add(info.save());
         }
         tag.put("DesignedData", listTag);
+        tag.putInt("version", version);
         System.out.println("[Tailormade][DESIGN_DATA] saving designs; targets: " + this.designData.size());
         return tag;
     }
@@ -52,6 +70,8 @@ public class DesignData extends SavedData {
             DesignDataRecord info = DesignDataRecord.load(listTag.getCompound(i));
             data.designData.put(info.uuid(), info);
         }
+        int version = (tag.contains("version")) ? tag.getInt("version") : 10000;
+        data.version = version;
         System.out.println("[Tailormade][DESIGN_DATA] LoadData Loaded: " + data.designData.size() + " items");
         return data;
     }
@@ -84,5 +104,7 @@ public class DesignData extends SavedData {
     public Collection<DesignDataRecord> getByUser(UUID userId) {
         return designData.values().stream().filter(d -> d.userId().equals(userId)).toList();
     }
+    public int version() { return this.version; }
+    public void setVersion(int v) { this.version = v; setDirty(); }
 }
 

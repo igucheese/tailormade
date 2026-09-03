@@ -11,12 +11,17 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class TailorBlock extends FacingBlock implements EntityBlock {
     public TailorBlock(BlockBehaviour.Properties properties) {
-        super(properties);
+        super(
+                properties.mapColor(MapColor.COLOR_YELLOW)
+                    .strength(1.0f)
+                    .noOcclusion()
+        );
     }
 
     @Override

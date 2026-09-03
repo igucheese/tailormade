@@ -1,7 +1,6 @@
 package com.tailormade.tailor.entities.items;
 
-import com.tailormade.tailor.data.PatternType;
-import com.tailormade.tailor.data.PixelData;
+import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.registries.ModItems;
 import net.minecraft.ChatFormatting;
@@ -14,6 +13,7 @@ import net.minecraft.world.item.TooltipFlag;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.tailormade.tailor.data.PatternType.*;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
@@ -50,11 +50,35 @@ public class PatternItem extends Item {
         } else if (stack.is(ModItems.PATTERN_BOOTS.get())) {
             typeName = "boots";
         }
+        if (stack.has(ModDataComponents.IS_COPIED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_COPIED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.copied").withStyle(ChatFormatting.GRAY));
+        }
+        if (stack.has(ModDataComponents.IS_EXTRACTED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_EXTRACTED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.extracted").withStyle(ChatFormatting.GRAY));
+        }
+        if (stack.has(ModDataComponents.IS_IMPORTED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_IMPORTED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.imported").withStyle(ChatFormatting.GRAY));
+        }
         if (!typeName.isBlank() && customName != null) {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.type." + typeName).withStyle(ChatFormatting.GRAY));
         }
         if (patternId != null) {
-            tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
+//            tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
+            DesignDataRecord dataRecord = DesignDataClientCache.get(UUID.fromString(patternId));
+            if (dataRecord.isLocked()) {
+                tooltip.add(Component.translatable("item.tailormade.pattern.description.locked").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
+            if (dataRecord.designerId() != null) {
+                UUID searchingId = (!dataRecord.designerId().equals(dataRecord.userId())) ? dataRecord.designerId() : dataRecord.userId();
+                GlobalPlayer playerData = GlobalPlayerCache.get(searchingId);
+                String playerName = null;
+                if (playerData != null) {
+                    playerName = playerData.name();
+                } else {
+                    playerName = dataRecord.designerId().toString();
+                }
+                tooltip.add(Component.translatable("item.tailormade.pattern.description.designer", playerName).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
         }
     }
 }

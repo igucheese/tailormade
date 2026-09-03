@@ -19,6 +19,7 @@ public class DesignerMenu extends AbstractContainerMenu {
     public static final int PREVIEW_SLOT2 = 2;
     public static final int PREVIEW_SLOT3 = 3;
     public static final int SLOT_COUNT = 4;
+    private final Player player;
 
     private final SimpleContainer patternContainer = new SimpleContainer(SLOT_COUNT) {
         @Override
@@ -35,10 +36,11 @@ public class DesignerMenu extends AbstractContainerMenu {
         super(ModMenuTypes.DESIGNER_MENU.get(), windowId);
         addPatternSlots();
         addPlayerInventory(playerInv);
+        this.player = playerInv.player;
     }
 
     private void addPatternSlots() {
-        addSlot(new PatternSlot(patternContainer, MAIN_SLOT, 8, 7));
+        addSlot(new PatternSlot(patternContainer, MAIN_SLOT, 8, 7, this.player));
         addSlot(new PreviewPatternSlot(patternContainer, PREVIEW_SLOT1, 248, 157));
         addSlot(new PreviewPatternSlot(patternContainer, PREVIEW_SLOT2, 266, 157));
         addSlot(new PreviewPatternSlot(patternContainer, PREVIEW_SLOT3, 284, 157));
@@ -46,7 +48,7 @@ public class DesignerMenu extends AbstractContainerMenu {
 
     private void addPlayerInventory(Inventory inv) {
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(inv, col, 141 + col * 18, 198) {
+            this.addSlot(new Slot(inv, col, 141 + col * 18, 204) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return stack.getItem() instanceof PatternItem;
@@ -130,7 +132,7 @@ public class DesignerMenu extends AbstractContainerMenu {
 
     private class PreviewPatternSlot extends PatternSlot {
         public PreviewPatternSlot(SimpleContainer container, int index, int x, int y) {
-            super(container, index, x, y);
+            super(container, index, x, y, null);
         }
 
         @Override

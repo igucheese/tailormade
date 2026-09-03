@@ -2,6 +2,7 @@ package com.tailormade.tailor.registries;
 
 import com.tailormade.tailor.client.menu.BleachMenu;
 import com.tailormade.tailor.client.menu.DesignerMenu;
+import com.tailormade.tailor.client.menu.ManagerMenu;
 import com.tailormade.tailor.client.menu.TailorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -26,5 +27,10 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<BleachMenu>> BLEACH_MENU =
             MENUS.register("bleach_menu", () ->
                     IMenuTypeExtension.create(BleachMenu::new)
+            );
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ManagerMenu>> MANAGER_MENU =
+            MENUS.register("manager_menu", () ->
+                    IMenuTypeExtension.create(ManagerMenu::new)
             );
 }
