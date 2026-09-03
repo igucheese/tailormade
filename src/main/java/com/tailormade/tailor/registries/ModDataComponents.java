@@ -70,4 +70,11 @@ public class ModDataComponents {
                             .persistent(Codec.BOOL)
                             .networkSynchronized(ByteBufCodecs.BOOL)
                             .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> IS_IMPORTED =
+            COMPONENTS.register("is_imported",
+                    () -> DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(ByteBufCodecs.BOOL)
+                            .build());
 }

@@ -56,6 +56,9 @@ public class PatternItem extends Item {
         if (stack.has(ModDataComponents.IS_EXTRACTED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_EXTRACTED.get()))) {
             tooltip.add(Component.translatable("item.tailormade.pattern.extracted").withStyle(ChatFormatting.GRAY));
         }
+        if (stack.has(ModDataComponents.IS_IMPORTED) && Boolean.TRUE.equals(stack.get(ModDataComponents.IS_IMPORTED.get()))) {
+            tooltip.add(Component.translatable("item.tailormade.pattern.imported").withStyle(ChatFormatting.GRAY));
+        }
         if (!typeName.isBlank() && customName != null) {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.type." + typeName).withStyle(ChatFormatting.GRAY));
         }

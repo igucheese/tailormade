@@ -36,10 +36,10 @@ public class PatternDataSaver {
     }
 
     public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner) {
-        return saveDeign(level, stack, pixelData, patternItem, designer, patternName, originalDesigner, false, false);
+        return saveDeign(level, stack, pixelData, patternItem, designer, patternName, originalDesigner, false, false, false);
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted) {
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted, boolean isImported) {
         try {
             int[] incomingPixels = pixelData.pixels();
 
@@ -66,6 +66,9 @@ public class PatternDataSaver {
             }
             if (isExtracted) {
                 stack.set(ModDataComponents.IS_EXTRACTED.get(), true);
+            }
+            if (isImported) {
+                stack.set(ModDataComponents.IS_IMPORTED.get(), true);
             }
 
             return newDesign;
