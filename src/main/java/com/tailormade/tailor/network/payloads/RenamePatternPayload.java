@@ -87,7 +87,6 @@ public record RenamePatternPayload(UUID patternId, String name) implements Custo
             stack.set(DataComponents.CUSTOM_NAME, Component.literal(payload.name()));
             stack.set(ModDataComponents.PATTERN_NAME, payload.name());
 
-            System.out.println("[CHECK][RenamePatternPayload.handle] saved design name: " + newDesign);
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.renamed"), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(payload.patternId(), newDesign));
 

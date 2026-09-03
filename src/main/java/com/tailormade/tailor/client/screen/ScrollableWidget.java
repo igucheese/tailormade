@@ -107,9 +107,7 @@ public class ScrollableWidget<T> extends AbstractWidget {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        System.out.println("[CHECK][ScrollableWidget.mouseClicked] mouseClicked A");
         if (!this.active || !this.visible) return false;
-        System.out.println("[CHECK][ScrollableWidget.mouseClicked] mouseClicked B");
 
         int dropY = getY();
         int visibleCount = Math.min(items.size(), maxVisible);

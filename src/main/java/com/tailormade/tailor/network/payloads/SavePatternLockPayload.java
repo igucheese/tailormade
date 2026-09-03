@@ -67,7 +67,6 @@ public record SavePatternLockPayload(UUID patternId, boolean isLocked) implement
             DesignDataRecord newDesign = payload.isLocked() ? design.withLocked() : design.withUnlocked();
             DesignData.get(level).updateDesign(payload.patternId(), newDesign);
 
-            System.out.println("[CHECK][SavePatternLockPayload.handle] saved design lock status: " + newDesign);
             String messageId = payload.isLocked() ? "locked" : "unlocked";
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager." + messageId), true);
             PacketDistributor.sendToAllPlayers(new SyncDesignPayload(payload.patternId(), newDesign));
