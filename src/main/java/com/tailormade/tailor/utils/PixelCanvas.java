@@ -18,7 +18,7 @@ import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 public class PixelCanvas {
 
     public static final int TRANSPARENT = 0x00000000;
-    public static final int DEFAULT_COLOR = 0xFFFFFFFF;
+    public static final int DEFAULT_COLOR = 0x00000000;
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
     private static final int HISTORY_MAX = 20;
@@ -78,7 +78,7 @@ public class PixelCanvas {
     private void trySetPixel(int x, int y, int argbColor) {
         if (isSkin && !PowderRoomEditableRegions.isEditable(x, y)) return;
         try {
-            pixels[y * width + x] = argbColor;
+            pixels[convertXYToIndex(x, y)] = argbColor;
         } catch (Exception e) {}
     }
 
@@ -90,11 +90,45 @@ public class PixelCanvas {
         dirty = true;
     }
 
+    public void fill(int startX, int startY, int argbColor) {
+        int startIndex = convertXYToIndex(startX, startY);
+        if (startIndex < 0 || startIndex >= pixels.length) return;
+
+        int targetColor = pixels[startIndex];
+        if (targetColor == argbColor) return; // 同色なら何もしない
+
+        Deque<int[]> stack = new ArrayDeque<>();
+        stack.push(new int[]{startX, startY});
+
+        while (!stack.isEmpty()) {
+            int[] pos = stack.pop();
+            int x = pos[0];
+            int y = pos[1];
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+            int index = convertXYToIndex(x, y);
+            if (pixels[index] != targetColor) continue;
+
+            trySetPixel(x, y, argbColor);
+
+            stack.push(new int[]{x + 1, y});
+            stack.push(new int[]{x - 1, y});
+            stack.push(new int[]{x, y + 1});
+            stack.push(new int[]{x, y - 1});
+        }
+
+        dirty = true;
+    }
+
     private int[] convertIndexToXY(int i) {
         int x = i % width;
         int y = (i - x) / width;
         int[] coords = {x, y};
         return coords;
+    }
+
+    private int convertXYToIndex(int x, int y) {
+        return y * width + x;
     }
 
     public int getPixel(int x, int y) {

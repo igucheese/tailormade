@@ -91,7 +91,6 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
         // 元データ
         DesignDataRecord orgData = DesignData.get(level).get(packet.patternId());
         if (orgData == null) return;
-        String extractedDesignName = Component.translatable("item.tailormade.pattern.extracted", orgData.name()).getString();
         // ロックされていて、かつ player = org.player ではない場合は弾く
         if (orgData.isLocked() && !player.getUUID().equals(orgData.userId())) {
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
@@ -102,7 +101,7 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
 
         // 保存実行
         // 所有者を抽出した人に更新
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), patternStack, orgData.pixelData(), patternItem, player.getUUID(), extractedDesignName, orgData.designerId());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), patternStack, orgData.pixelData(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), false, true);
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: 抽出したよ！もとのID: {}、抽出品のID: {}",

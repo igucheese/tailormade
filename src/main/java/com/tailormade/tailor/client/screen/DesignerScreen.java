@@ -7,10 +7,8 @@ import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
-import com.tailormade.tailor.data.DesignDataClientCache;
-import com.tailormade.tailor.data.DesignDataRecord;
-import com.tailormade.tailor.data.PatternType;
-import com.tailormade.tailor.data.PixelData;
+import com.tailormade.tailor.data.*;
+import com.tailormade.tailor.data.records.DesignTemplate;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
@@ -21,14 +19,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
@@ -42,7 +35,7 @@ import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
 public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final ResourceLocation GUI_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath("tailormade", "textures/gui/designer_gui.png");
+            ResourceLocation.fromNamespaceAndPath("tailormade", "textures/gui/designer_gui_2.png");
     private static final ResourceLocation BRUSH_1_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/brush_1.png");
     private static final ResourceLocation BRUSH_2_ICON =
@@ -55,11 +48,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eyedropper.png");
     private static final ResourceLocation ERASER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eraser.png");
+    private static final ResourceLocation POPUP_BG_TEMPLATE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/designer_gui_overlay_t.png");
 
     private static final int GUI_W = 384;
-    private static final int GUI_H = 216;
+    private static final int GUI_H = 224;
     private static final int GUI_OFFSET_X = 64;
-    private static final int GUI_OFFSET_Y = 148;
+    private static final int GUI_OFFSET_Y = 144;
 
     private static final int ED_X = 28;
     private static final int ED_Y = 6;
@@ -108,6 +103,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private double dragStartX = -1;
     private double dragStartY = -1;
 
+    // ポップアップ系
+    private String popUpMode = null;
+    private List<DesignTemplate> templates;
+    private ScrollableWidget<DesignTemplate> scrollableTemplates;
+
     private ItemStack lastPatternStack = ItemStack.EMPTY;
     private TailorTextureCompositor previewCompositor;
 
@@ -146,13 +146,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
-        this.nameInput = new EditBox(this.font, leftPos + PV_X + PV_W - 70, topPos + PV_Y + PV_H - 6, 72, 20, Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
+        this.nameInput = new EditBox(this.font, leftPos + PV_X + PV_W - 70, topPos + PV_Y + PV_H - 6, 72, 19, Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.nameInput.setMaxLength(15);
         this.nameInput.setHint(Component.translatable("gui.tailormade.tailor.pattern_name.placeholder"));
         this.addRenderableWidget(this.nameInput);
 
         int saveX = leftPos + PV_X + PV_W - 63;
-        int saveY = topPos + PV_Y + PV_H + 21;
+        int saveY = topPos + PV_Y + PV_H + 15;
         saveButton = Button.builder(Component.translatable("gui.tailormade.designer.save"), btn -> onSave())
                 .pos(saveX, saveY)
                 .size(65, 24)
@@ -212,6 +212,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         renderPreview(g, mouseX, mouseY);
         renderRgbLabels(g);
         renderToolabr(g);
+        renderPopups(g, mouseX, mouseY, partialTick);
 
         if (showUnsavedWarning) renderUnsavedWarning(g);
         this.isOnEditBox = this.nameInput.isFocused();
@@ -480,9 +481,31 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         g.drawString(font, Component.translatable("gui.tailormade.modal.cancel").getString(), wx + 68, wy + 28, 0xFFFFFF, false);
     }
 
+    private void renderPopups(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        if (popUpMode == null) return;
+        int x = leftPos + 5;
+        int y = topPos + 4;
+        int w = 114;
+        int h = 192;
+
+        if (popUpMode.equals("template")) {
+            g.blit(POPUP_BG_TEMPLATE, x, y, 0, 0, w, h, w, h);
+
+            // scrollable
+            if (this.scrollableTemplates != null) {
+                this.scrollableTemplates.render(g, mouseX, mouseY, partialTick);
+            }
+        }
+    }
+
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (showUnsavedWarning) return handleWarningClick(mx, my);
+        if (popUpMode != null) {
+            if (popUpMode.equals("template")) {
+                return handleTemplateClick(mx, my);
+            }
+        }
         if (palette.mouseClicked(mx, my)) {
             clickedArea = "palette";
             syncRgbBoxesFromPalette();
@@ -514,6 +537,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             canvas.snapshot();
             clickedArea = "editor";
             applyBrush(mx, my);
+            return true;
+        }
+        if (button == 0 && inTemplateButton(mx, my)) {
+            this.prepareTemplates();
             return true;
         }
         if (button == 0 && inPreviewArea(mx, my)) {
@@ -597,6 +624,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     @Override
     public boolean mouseScrolled(double mx, double my, double dx, double dy) {
         if (!inEditorArea(mx, my) || canvas == null) return super.mouseScrolled(mx, my, dx, dy);
+        if (popUpMode != null) {
+            if (popUpMode.equals("template")) {
+                return super.mouseScrolled(mx, my, dx, dy);
+            }
+        }
 
         float oldScale = currentScale();
         float minZoom = 1.0f;
@@ -711,6 +743,27 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return true;
     }
 
+    private boolean handleTemplateClick(double mx, double my) {
+        int x = leftPos + 5;
+        int y = topPos + 4;
+        int w = 114;
+        int h = 192;
+        if (inBox(mx, my, x, y, w, h)) {
+            scrollableTemplates.mouseClicked(mx, my, 1);
+            return true;
+        } else {
+            // ウィジェット系リセット
+            this.closeTemplateModal();
+            return true;
+        }
+    }
+
+    private void closeTemplateModal() {
+        this.scrollableTemplates.visible = false;
+        this.scrollableTemplates = null;
+        popUpMode = null;
+    }
+
     private void applyBrush(double mx, double my) {
         if (canvas == null) return;
         float scale = currentScale();
@@ -723,7 +776,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
         if (palette.isEraserMode()) {
             if (TOOL_MODE == "bucket") {
-                canvas.fill(TRANSPARENT);
+                canvas.fill(px[0], px[1], TRANSPARENT);
             } else {
                 canvas.erase(px[0], px[1], BRUSH_SIZE);
             }
@@ -733,12 +786,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             palette.syncRgbFromColor();
             hueBar.setHueFromColor(color);
             colorPicker.setSelectedColor(color);
+            syncRgbBoxesFromPalette();
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
         } else {
             if (TOOL_MODE == "bucket") {
-                canvas.fill(palette.getSelectedColor());
+                canvas.fill(px[0], px[1], palette.getSelectedColor());
             } else {
                 if (TOOL_MODE == "eraser") {
                     canvas.erase(px[0], px[1], BRUSH_SIZE);
@@ -795,6 +849,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y, 16, 186);
     }
 
+    private boolean inTemplateButton(double mx, double my) {
+        return inBox(mx, my, leftPos + 6, topPos + 210, 43, 9);
+    }
+
     private void onRgbEdited() {
         try {
             int r = Integer.parseInt(rBox.getValue());
@@ -812,6 +870,37 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         rBox.setValue(String.valueOf(r));
         gBox.setValue(String.valueOf(g));
         bBox.setValue(String.valueOf(b));
+    }
+
+    private void prepareTemplates() {
+        ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
+        if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) {
+            templates = new ArrayList<>();
+            return;
+        }
+        PatternType type = patternItem.getPatternType(mainStack);
+        String typeName = type.getType();
+
+        templates = DesignTemplateCache.getByType(typeName);
+        System.out.println("[CHECK][prepareTemplates] templates: " + templates);
+
+        this.scrollableTemplates = new ScrollableWidget<>(leftPos + 13, topPos + 28, 96, 140, "えらんでね", 20, 7, templates, selected -> {
+            this.reflectTemplateDesignToEditor(selected);
+        }, TemplateScrollWidget.getRenderer());
+        this.scrollableTemplates.setOutlineVisible(false);
+        this.scrollableTemplates.setBackgroundColor(0xffdfc9a3);
+
+        popUpMode = "template";
+    }
+
+    private void reflectTemplateDesignToEditor(DesignTemplate template) {
+        System.out.println("[CHECK][scrollableTemplates] selected: " + template);
+        int[] design = template.pixelData();
+        if (design != null && canvas != null) {
+            canvas.loadPixels(design);
+            canvas.init();
+        }
+        this.closeTemplateModal();
     }
 
     private void onSave() {

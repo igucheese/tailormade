@@ -8,7 +8,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
