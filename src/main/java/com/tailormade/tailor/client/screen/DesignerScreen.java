@@ -882,7 +882,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         String typeName = type.getType();
 
         templates = DesignTemplateCache.getByType(typeName);
-        System.out.println("[CHECK][prepareTemplates] templates: " + templates);
 
         this.scrollableTemplates = new ScrollableWidget<>(leftPos + 13, topPos + 28, 96, 140, "えらんでね", 20, 7, templates, selected -> {
             this.reflectTemplateDesignToEditor(selected);
@@ -894,7 +893,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private void reflectTemplateDesignToEditor(DesignTemplate template) {
-        System.out.println("[CHECK][scrollableTemplates] selected: " + template);
         int[] design = template.pixelData();
         if (design != null && canvas != null) {
             canvas.loadPixels(design);
