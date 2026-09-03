@@ -421,12 +421,10 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
             if (selected == null) {
                 return; // キャンセル or エラー
             }
-            System.out.println("[CHECK][SELETCED FILE]" + selected);
             try {
                 CompoundTag tagFromFile = NbtIo.read(selected);
                 if (tagFromFile == null) { return; }
                 DesignDataRecord importedRecord = DesignDataNbtImporter.fromNbt(tagFromFile);
-                System.out.println("[CHECK][SELETCED FILE] importedRecord: " + importedRecord);
                 this.menu.setImportedData(importedRecord);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -436,7 +434,6 @@ public class ManagerScreen extends AbstractContainerScreen<ManagerMenu> {
 
     private void onImport() {
         DesignDataRecord imported = this.menu.getImported();
-        System.out.println("[CHECK][onImport]" + imported);
         if (!this.menu.canImport() || imported == null) {
             return;
         }
