@@ -1,19 +1,16 @@
 package com.tailormade.tailor.utils;
 
 import com.tailormade.tailor.Tailormade;
-import com.tailormade.tailor.data.DesignData;
-import com.tailormade.tailor.data.DesignDataRecord;
-import com.tailormade.tailor.data.PatternType;
-import com.tailormade.tailor.data.PixelData;
+import com.tailormade.tailor.data.*;
+import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.entities.items.PatternItem;
-import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.List;
 import java.util.UUID;
 
 public class PatternDataSaver {
@@ -31,15 +28,15 @@ public class PatternDataSaver {
         return true;
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName) {
-        return saveDeign(level, stack, pixelData, patternItem, designer, patternName, designer);
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName) {
+        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, designer);
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner) {
-        return saveDeign(level, stack, pixelData, patternItem, designer, patternName, originalDesigner, false, false, false);
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner) {
+        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, originalDesigner, false, false, false);
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted, boolean isImported) {
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted, boolean isImported) {
         try {
             int[] incomingPixels = pixelData.pixels();
 
@@ -52,7 +49,7 @@ public class PatternDataSaver {
             }
             PatternType type = patternItem.getPatternType(stack);
             DesignDataRecord newDesign = new DesignDataRecord(
-                    uuid, new PixelData(incomingPixels), designer, patternName, type.getType(), false, originalDesigner
+                    uuid, new PixelData(incomingPixels), layers, designer, patternName, type.getType(), false, originalDesigner
             );
             DesignData.get(level).addDesign(newDesign);
 
