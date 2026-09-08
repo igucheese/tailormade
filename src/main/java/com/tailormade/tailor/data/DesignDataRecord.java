@@ -1,19 +1,19 @@
 package com.tailormade.tailor.data;
 
-import com.mojang.serialization.Codec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.LongArrayTag;
+import com.tailormade.tailor.data.records.LayerData;
+import net.minecraft.nbt.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public record DesignDataRecord(
         UUID uuid,
         PixelData pixelData,
+        List<LayerData> layers,
         UUID userId,
         String name,
         String type,
@@ -24,6 +24,13 @@ public record DesignDataRecord(
         CompoundTag nbt = new CompoundTag();
         nbt.putUUID("uuid", uuid);
         nbt.put("pixelData", new IntArrayTag(pixelData.getPixels()));
+
+        ListTag layersTag = new ListTag();
+        for (LayerData layer : this.layers) {
+            layersTag.add(layer.save());
+        }
+        nbt.put("layers", layersTag);
+
         nbt.putUUID("userId", userId);
         nbt.putString("name", name);
         nbt.putString("type", type);
@@ -36,32 +43,44 @@ public record DesignDataRecord(
         UUID uuid = nbt.getUUID("uuid");
         int[] pixels = nbt.getIntArray("pixelData");
         PixelData pixelData = new PixelData(pixels);
+
+        ListTag layersTag = nbt.getList("layers", Tag.TAG_COMPOUND);
+        List<LayerData> layers = new ArrayList<>();
+        for (int i = 0; i < layersTag.size(); i++) {
+            CompoundTag layerNbt = layersTag.getCompound(i);
+            layers.add(LayerData.load(layerNbt));
+        }
+
         UUID userId = nbt.getUUID("userId");
         String name = nbt.getString("name");
         String type = nbt.getString("type");
         boolean isLocked = nbt.contains("isLocked") ? nbt.getBoolean("isLocked") : false;
         UUID designerId = nbt.contains("designerId") ? nbt.getUUID("designerId") : userId;
 
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId);
     }
 
     public DesignDataRecord withLocked() {
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, true, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, true, designerId);
     }
     public DesignDataRecord withUnlocked() {
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, false, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, false, designerId);
     }
     public DesignDataRecord withName(String newName) {
-        return new DesignDataRecord(uuid, pixelData, userId, newName, type, isLocked, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, newName, type, isLocked, designerId);
     }
     public DesignDataRecord withOriginalDesigner(UUID designer) {
-        return new DesignDataRecord(uuid, pixelData, userId, name, type, isLocked, designer);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designer);
     }
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, List<LayerData>> LAYERS_STREAM_CODEC =
+            ByteBufCodecs.collection(ArrayList::new, LayerData.STREAM_CODEC);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DesignDataRecord> STREAM_CODEC = StreamCodec.of(
             (buf, info) -> {
                 buf.writeUUID(info.uuid());
                 PixelData.STREAM_CODEC.encode(buf, info.pixelData());
+                LAYERS_STREAM_CODEC.encode(buf, info.layers());
                 buf.writeUUID(info.userId());
                 buf.writeUtf(info.name());
                 buf.writeUtf(info.type());
@@ -72,6 +91,7 @@ public record DesignDataRecord(
                 return new DesignDataRecord(
                         buf.readUUID(),
                         PixelData.STREAM_CODEC.decode(buf),
+                        LAYERS_STREAM_CODEC.decode(buf),
                         buf.readUUID(),
                         buf.readUtf(),
                         buf.readUtf(),
