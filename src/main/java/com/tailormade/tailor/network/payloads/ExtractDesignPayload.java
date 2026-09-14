@@ -101,7 +101,7 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
 
         // 保存実行
         // 所有者を抽出した人に更新
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), patternStack, orgData.pixelData(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), false, true, false);
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), patternStack, orgData.pixelData(), orgData.layers(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), false, true, false);
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: 抽出したよ！もとのID: {}、抽出品のID: {}",
