@@ -3,7 +3,7 @@ package com.tailormade.tailor.utils.files;
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.PixelData;
-import com.tailormade.tailor.utils.LayerService;
+import com.tailormade.tailor.utils.editor.LayerService;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
