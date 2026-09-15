@@ -1,9 +1,7 @@
-package com.tailormade.tailor.utils;
+package com.tailormade.tailor.utils.editor;
 
 import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.PixelData;
-
-import java.util.List;
 
 public class LayerService {
     public static LayerData newLayer(int[] pixels) {
