@@ -157,6 +157,7 @@ public class PowderRoomScreen extends Screen {
         hueBar.setH(32);
         hueBar.init();
         colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
+        colorPicker.setH(32);
         colorPicker.init();
 
         int rgbBaseX = leftPos + 14;
