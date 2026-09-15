@@ -157,10 +157,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         addRenderableWidget(gBox);
         addRenderableWidget(bBox);
 
-        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
-        hueBar.setH(32);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9);
+        hueBar.setH(44);
         hueBar.init();
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 44);
+        colorPicker.setH(43);
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
@@ -780,11 +781,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                 canvas.removeLayer(canvas.getActiveLayerIndex());
             } else if (keyCode == GLFW.GLFW_KEY_UP) {
                 int nextInt = canvas.moveLayer(true);
+                if (nextInt == -1) { return true; }
                 thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
                 thumbnailManager.update(nextInt, canvas.getLayerPixels(nextInt));
                 canvas.setActiveLayerIndex(nextInt);
             } else if (keyCode == GLFW.GLFW_KEY_DOWN) {
                 int nextInt = canvas.moveLayer(false);
+                if (nextInt == -1) { return true; }
                 thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
                 thumbnailManager.update(nextInt, canvas.getLayerPixels(nextInt));
                 canvas.setActiveLayerIndex(nextInt);
@@ -906,13 +909,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
 
-        if (palette.isEraserMode()) {
-            if (TOOL_MODE == "bucket") {
-                canvas.fill(px[0], px[1], TRANSPARENT);
-            } else {
-                canvas.erase(px[0], px[1], BRUSH_SIZE);
-            }
-        } else if (TOOL_MODE == "eyedropper") {
+        if (Objects.equals(TOOL_MODE, "eyedropper")) {
             int color = canvas.getPixel(px[0], px[1]);
             palette.setSelectedColor(color);
             palette.syncRgbFromColor();
@@ -922,11 +919,18 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
+            return;
+        } else if (palette.isEraserMode()) {
+            if (Objects.equals(TOOL_MODE, "bucket")) {
+                canvas.fill(px[0], px[1], TRANSPARENT);
+            } else {
+                canvas.erase(px[0], px[1], BRUSH_SIZE);
+            }
         } else {
-            if (TOOL_MODE == "bucket") {
+            if (Objects.equals(TOOL_MODE, "bucket")) {
                 canvas.fill(px[0], px[1], palette.getSelectedColor());
             } else {
-                if (TOOL_MODE == "eraser") {
+                if (Objects.equals(TOOL_MODE, "eraser")) {
                     canvas.erase(px[0], px[1], BRUSH_SIZE);
                 } else {
                     canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
