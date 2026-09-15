@@ -12,6 +12,8 @@ import java.awt.*;
 public class ColorPickerWidget {
 
     private static final int SIZE = 16;
+    private static int SIZE_X = 16;
+    private static int SIZE_Y = 16;
 
     private final int x;
     private final int y;
@@ -30,9 +32,16 @@ public class ColorPickerWidget {
         this.y = y;
     }
 
+    public void setW(int w) {
+        SIZE_X = w;
+    }
+    public void setH(int h) {
+        SIZE_Y = h;
+    }
+
     public void init() {
         if (texture != null) texture.close();
-        texture = new DynamicTexture(SIZE, SIZE, true);
+        texture = new DynamicTexture(SIZE_X, SIZE_Y, true);
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
                 .register("tailormade_colorpicker", texture);
@@ -61,8 +70,8 @@ public class ColorPickerWidget {
         this.baseColor = 0xFF000000 | (baseArgb & 0x00FFFFFF);
 
         // 彩度・明度からカーソル位置を復元する
-        this.cursorX = Math.clamp((int)(s * (SIZE - 1)), 0, SIZE - 1);
-        this.cursorY = Math.clamp((int)((1.0f - bv) * (SIZE - 1)), 0, SIZE - 1);
+        this.cursorX = Math.clamp((int)(s * (SIZE_X - 1)), 0, SIZE_X - 1);
+        this.cursorY = Math.clamp((int)((1.0f - bv) * (SIZE_Y - 1)), 0, SIZE_Y - 1);
 
         this.selectedColor = argb & 0xFF000000 | (argb & 0x00FFFFFF);
 
@@ -77,11 +86,11 @@ public class ColorPickerWidget {
         int bg = (baseColor >>  8) & 0xFF;
         int bb =  baseColor & 0xFF;
 
-        for (int py = 0; py < SIZE; py++) {
-            float brightness = 1.0f - (float) py / (SIZE - 1);
+        for (int py = 0; py < SIZE_Y; py++) {
+            float brightness = 1.0f - (float) py / (SIZE_Y - 1);
 
-            for (int px = 0; px < SIZE; px++) {
-                float saturation = (float) px / (SIZE - 1);
+            for (int px = 0; px < SIZE_X; px++) {
+                float saturation = (float) px / (SIZE_X - 1);
 
                 int r = (int)((1.0f - saturation) * 255 + saturation * br);
                 int g = (int)((1.0f - saturation) * 255 + saturation * bg);
@@ -102,8 +111,8 @@ public class ColorPickerWidget {
         int bg = (baseColor >>  8) & 0xFF;
         int bb =  baseColor & 0xFF;
 
-        float brightness = 1.0f - (float) py / (SIZE - 1);
-        float saturation = (float) px / (SIZE - 1);
+        float brightness = 1.0f - (float) py / (SIZE_Y - 1);
+        float saturation = (float) px / (SIZE_X - 1);
 
         int r = (int)((1.0f - saturation) * 255 + saturation * br);
         int g = (int)((1.0f - saturation) * 255 + saturation * bg);
@@ -120,7 +129,7 @@ public class ColorPickerWidget {
         if (textureLocation == null) return;
 
         RenderSystem.enableBlend();
-        g.blit(textureLocation, x, y, 0, 0, SIZE, SIZE, SIZE, SIZE);
+        g.blit(textureLocation, x, y, 0, 0, SIZE_X, SIZE_Y, SIZE_X, SIZE_Y);
         RenderSystem.disableBlend();
 
         // カーソル点を描画しておく！
@@ -137,8 +146,8 @@ public class ColorPickerWidget {
 
     public boolean mouseDragged(double mx, double my) {
         if (!isDragging) return false;
-        int px = Math.clamp((int)(mx - x), 0, SIZE - 1);
-        int py = Math.clamp((int)(my - y), 0, SIZE - 1);
+        int px = Math.clamp((int)(mx - x), 0, SIZE_X - 1);
+        int py = Math.clamp((int)(my - y), 0, SIZE_Y - 1);
         pick(px, py);
         return true;
     }
@@ -157,13 +166,13 @@ public class ColorPickerWidget {
     }
 
     private void pick(int px, int py) {
-        cursorX = Math.clamp(px, 0, SIZE - 1);
-        cursorY = Math.clamp(py, 0, SIZE - 1);
+        cursorX = Math.clamp(px, 0, SIZE_X - 1);
+        cursorY = Math.clamp(py, 0, SIZE_Y - 1);
         selectedColor = sampleColor(cursorX, cursorY);
     }
 
     private boolean inBounds(double mx, double my) {
-        return mx >= x && mx < x + SIZE && my >= y && my < y + SIZE;
+        return mx >= x && mx < x + SIZE_X && my >= y && my < y + SIZE_Y;
     }
 
     public int getSelectedColor() { return selectedColor; }

@@ -45,7 +45,6 @@ public class Tailormade {
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAILORMADE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.tailormade"))
-            .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> DESIGNER_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(PATTERN_HELMET.get());

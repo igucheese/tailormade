@@ -9,9 +9,13 @@ import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.records.DesignTemplate;
+import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.utils.DesignAccessor;
+import com.tailormade.tailor.utils.LayerService;
+import com.tailormade.tailor.utils.LayerThumbnailManager;
 import com.tailormade.tailor.utils.PixelCanvas;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -29,6 +33,7 @@ import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
@@ -48,6 +53,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eyedropper.png");
     private static final ResourceLocation ERASER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eraser.png");
+    private static final ResourceLocation LAYER_ICON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/layer_button.png");
+    private static final ResourceLocation LAYER_ADD_ICON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/layer_add.png");
+    private static final ResourceLocation LAYER_VISIBLE_ICON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/layer_visible.png");
+    private static final ResourceLocation LAYER_INVISIBLE_ICON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/layer_invisible.png");
     private static final ResourceLocation POPUP_BG_TEMPLATE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/designer_gui_overlay_t.png");
 
@@ -68,8 +81,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final int PAL_Y = 34;
     private static final int TOOLBAR_X = 223;
     private static final int TOOLBAR_Y = 10;
+    private static final int LAYER_BAR_Y = 180;
     private static int BRUSH_SIZE = 1;
     private static String TOOL_MODE = "brush";
+    private static boolean IS_CONTROLLING_LAYER = false;
 
     private static final int RGB_Y_OFFSET = 4;  // エディタ下端からの距離
     private static final int RGB_BOX_W = 28;
@@ -108,6 +123,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private List<DesignTemplate> templates;
     private ScrollableWidget<DesignTemplate> scrollableTemplates;
 
+    // レイヤー
+    private LayerThumbnailManager thumbnailManager;
+
     private ItemStack lastPatternStack = ItemStack.EMPTY;
     private TailorTextureCompositor previewCompositor;
 
@@ -139,10 +157,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         addRenderableWidget(gBox);
         addRenderableWidget(bBox);
 
-        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
-        hueBar.setH(32);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9);
+        hueBar.setH(44);
         hueBar.init();
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 44);
+        colorPicker.setH(43);
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
@@ -193,9 +212,29 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (canvas != null && canvas.getWidth() == size[0] && canvas.getHeight() == size[1]) return;
         if (canvas != null) canvas.close();
         canvas = new PixelCanvas(size[0], size[1]);
+        thumbnailManager = new LayerThumbnailManager(canvas.getWidth(), canvas.getHeight());
 
-        int[] existing = patternItem.getPixelData(mainStack);
-        if (existing != null) canvas.loadPixels(existing);
+        boolean hasLayersLoaded = false;
+        String patternId = mainStack.get(ModDataComponents.PATTERN_ID.get());
+        if (patternId != null) {
+            DesignDataRecord record = DesignAccessor.getDesignDataFromId(patternId);
+            if (record != null && !record.layers().isEmpty()) {
+                canvas.loadLayers(record.layers());
+                hasLayersLoaded = true;
+
+                for (LayerData layer : record.layers()) {
+                    thumbnailManager.update(layer.id(), layer.pixelData().pixels());
+                }
+            }
+        }
+
+        if (!hasLayersLoaded) {
+            int[] existing = patternItem.getPixelData(mainStack);
+            if (existing != null) {
+                canvas.loadPixels(existing);
+                thumbnailManager.update(0, existing);
+            }
+        }
         canvas.init();
     }
 
@@ -212,6 +251,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         renderPreview(g, mouseX, mouseY);
         renderRgbLabels(g);
         renderToolabr(g);
+        renderLayers(g);
         renderPopups(g, mouseX, mouseY, partialTick);
 
         if (showUnsavedWarning) renderUnsavedWarning(g);
@@ -243,6 +283,54 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         int toolBarActiveWidth = 12;
         int tollBarActiveX = toolBarX - 1;
         int toolBarActiveY = TOOL_MODE == "eraser" ? toolBarY + 64 : TOOL_MODE == "eyedropper" ? toolBarY + 51 : TOOL_MODE == "bucket" ? toolBarY + 38 : BRUSH_SIZE == 1 ? toolBarY - 1 : BRUSH_SIZE == 2 ? toolBarY + 12 : BRUSH_SIZE == 3 ? toolBarY + 25 : toolBarY - 1;
+        g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 1, labelBorderColor);
+        g.fill(tollBarActiveX,  toolBarActiveY + toolBarActiveWidth - 1, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
+        g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
+        g.fill(tollBarActiveX + toolBarActiveWidth - 1, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
+    }
+
+    private void renderLayers(GuiGraphics g) {
+        if (canvas == null) return;
+        int toolBarX = this.leftPos + TOOLBAR_X;
+        int toolBarY = this.topPos + LAYER_BAR_Y;
+        for (int i = 0; i < canvas.getLayers().size(); i++) {
+            g.blit(LAYER_ICON, toolBarX, toolBarY - (i * 12), 0, 0, 10, 10, 10, 10);
+
+            // レイヤー枠に縮小表示
+            if (thumbnailManager == null) continue;
+            ResourceLocation thumbLoc = thumbnailManager.getLocation(i);
+            if (thumbLoc != null) {
+                int slotSize = 8;
+                int texW = canvas.getWidth();
+                int texH = canvas.getHeight();
+                float scale = (float) slotSize / Math.max(texW, texH);
+
+                int drawX = toolBarX + 1;
+                int drawY = toolBarY - (i * 12) + 1;
+
+                g.pose().pushPose();
+                g.pose().translate(drawX, drawY, 0);
+                g.pose().scale(scale, scale, 1.0f);
+                g.blit(thumbLoc, 0, 0, 0, 0, texW, texH, texW, texH);
+                g.pose().popPose();
+            }
+
+            // 非表示中なら非表示アイコンを出す
+            if (!canvas.isLayerVisible(i)) {
+                g.blit(LAYER_INVISIBLE_ICON, toolBarX, toolBarY - (i * 12), 0, 0, 10, 10, 10, 10);
+            } else {
+                g.blit(LAYER_VISIBLE_ICON, toolBarX, toolBarY - (i * 12), 0, 0, 10, 10, 10, 10);
+            }
+        }
+        if (canvas.canAddLayer()) {
+            g.blit(LAYER_ADD_ICON, toolBarX, toolBarY - (canvas.getLayers().size() * 12), 0, 0, 10, 10, 10, 10);
+        }
+
+        // アクティブ枠
+        int labelBorderColor = 0xFF44FF44;
+        int toolBarActiveWidth = 12;
+        int tollBarActiveX = toolBarX - 1;
+        int toolBarActiveY = toolBarY - (canvas.getActiveLayerIndex() * 12) - 1;
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 1, labelBorderColor);
         g.fill(tollBarActiveX,  toolBarActiveY + toolBarActiveWidth - 1, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
@@ -506,6 +594,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                 return handleTemplateClick(mx, my);
             }
         }
+
+        IS_CONTROLLING_LAYER = false;
+
         if (palette.mouseClicked(mx, my)) {
             clickedArea = "palette";
             syncRgbBoxesFromPalette();
@@ -541,6 +632,23 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
         if (button == 0 && inTemplateButton(mx, my)) {
             this.prepareTemplates();
+            return true;
+        }
+        if (button == 0 && inLayerAddButton(mx, my)) {
+            if (canvas == null) return true;
+            if (!canvas.canAddLayer()) return true;
+            IS_CONTROLLING_LAYER = true;
+            canvas.addLayer();
+            return true;
+        }
+        if (button == 0 && inLayerArea(mx, my)) {
+            if (canvas == null) return true;
+            IS_CONTROLLING_LAYER = true;
+            int index = getLayerIndex(mx, my);
+            canvas.setActiveLayerIndex(index);
+            if (inLayerActionButton(mx, my)) {
+                canvas.toggleVisibility(canvas.getActiveLayerIndex());
+            }
             return true;
         }
         if (button == 0 && inPreviewArea(mx, my)) {
@@ -664,6 +772,29 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
+        // レイヤーコントロール時
+        if (IS_CONTROLLING_LAYER) {
+            if (canvas == null) return true;
+            if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+                canvas.toggleVisibility(canvas.getActiveLayerIndex());
+            } else if (keyCode == GLFW.GLFW_KEY_DELETE) {
+                canvas.removeLayer(canvas.getActiveLayerIndex());
+            } else if (keyCode == GLFW.GLFW_KEY_UP) {
+                int nextInt = canvas.moveLayer(true);
+                if (nextInt == -1) { return true; }
+                thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
+                thumbnailManager.update(nextInt, canvas.getLayerPixels(nextInt));
+                canvas.setActiveLayerIndex(nextInt);
+            } else if (keyCode == GLFW.GLFW_KEY_DOWN) {
+                int nextInt = canvas.moveLayer(false);
+                if (nextInt == -1) { return true; }
+                thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
+                thumbnailManager.update(nextInt, canvas.getLayerPixels(nextInt));
+                canvas.setActiveLayerIndex(nextInt);
+            }
+            return true;
+        }
+
         // 顔の向き
         if (keyCode == GLFW.GLFW_KEY_LEFT) {
             previewYaw -= 10.0f;
@@ -722,6 +853,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             dragStartY = -1;
         }
         if (button == 1) { rightDragStartX = -1; rightDragStartY = -1; }
+        if ("editor".equals(clickedArea) && canvas != null) {
+            canvas.commitPendingAction();
+            thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
+        }
         clickedArea = null;
         hueBar.mouseReleased();
         colorPicker.mouseReleased();
@@ -774,13 +909,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, scale);
         if (px == null) return;
 
-        if (palette.isEraserMode()) {
-            if (TOOL_MODE == "bucket") {
-                canvas.fill(px[0], px[1], TRANSPARENT);
-            } else {
-                canvas.erase(px[0], px[1], BRUSH_SIZE);
-            }
-        } else if (TOOL_MODE == "eyedropper") {
+        if (Objects.equals(TOOL_MODE, "eyedropper")) {
             int color = canvas.getPixel(px[0], px[1]);
             palette.setSelectedColor(color);
             palette.syncRgbFromColor();
@@ -790,11 +919,18 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
+            return;
+        } else if (palette.isEraserMode()) {
+            if (Objects.equals(TOOL_MODE, "bucket")) {
+                canvas.fill(px[0], px[1], TRANSPARENT);
+            } else {
+                canvas.erase(px[0], px[1], BRUSH_SIZE);
+            }
         } else {
-            if (TOOL_MODE == "bucket") {
+            if (Objects.equals(TOOL_MODE, "bucket")) {
                 canvas.fill(px[0], px[1], palette.getSelectedColor());
             } else {
-                if (TOOL_MODE == "eraser") {
+                if (Objects.equals(TOOL_MODE, "eraser")) {
                     canvas.erase(px[0], px[1], BRUSH_SIZE);
                 } else {
                     canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
@@ -853,6 +989,33 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return inBox(mx, my, leftPos + 6, topPos + 210, 43, 9);
     }
 
+    private boolean inLayerAddButton(double mx, double my) {
+        if (canvas == null) return false;
+        int y = topPos + LAYER_BAR_Y - ((canvas.getLayers().size()) * 12);
+        return inBox(mx, my, leftPos + TOOLBAR_X, y, 16, 12);
+    }
+
+    private boolean inLayerArea(double mx, double my) {
+        if (canvas == null) return false;
+        int y = topPos + LAYER_BAR_Y - ((canvas.getLayers().size() - 1) * 12);
+        return inBox(mx, my, leftPos + TOOLBAR_X, y, 16, (canvas.getLayers().size() * 12));
+    }
+    private boolean inLayerActionButton(double mx, double my) {
+        // 各レイヤーの操作系をクリックしたかどうか
+        if (canvas == null) return false;
+        int y = topPos + LAYER_BAR_Y - ((canvas.getLayers().size() - 1) * 12);
+        int diff = (int) my - y;
+        int divided = (int) Math.ceil(diff / 12);
+        return inBox(mx, my, leftPos + TOOLBAR_X, y + (12 * divided) + 6, 6, 6);
+    }
+    private int getLayerIndex(double mx, double my) {
+        if (canvas == null) return -1;
+        int y = topPos + LAYER_BAR_Y - ((canvas.getLayers().size() - 1) * 12);
+        int diff = (int) my - y;
+        int divided = (int) Math.ceil(diff / 12);
+        return canvas.getLayers().size() - divided - 1;
+    }
+
     private void onRgbEdited() {
         try {
             int r = Integer.parseInt(rBox.getValue());
@@ -895,8 +1058,12 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private void reflectTemplateDesignToEditor(DesignTemplate template) {
         int[] design = template.pixelData();
         if (design != null && canvas != null) {
+            // TODO: レイヤーをリセットするべきか否か…要検討
             canvas.loadPixels(design);
             canvas.init();
+            if (thumbnailManager != null) {
+                thumbnailManager.update(canvas.getActiveLayerIndex(), canvas.getActiveLayerPixels());
+            }
         }
         this.closeTemplateModal();
     }
@@ -906,8 +1073,16 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem)) return;
 
+        List<PixelCanvas.Layer> layers = canvas.getLayers();
+        List<LayerData> layerData = new ArrayList<>();
+        for (int i = 0; i < layers.size(); i++) {
+            layerData.add(
+                    LayerService.newLayer(i, i, new PixelData(layers.get(i).pixelData()), layers.get(i).isVisible())
+            );
+        }
+
         PacketDistributor.sendToServer(
-                new SaveDesignPayload(DesignerMenu.MAIN_SLOT, new PixelData(canvas.getPixels()), this.nameInput.getValue())
+                new SaveDesignPayload(DesignerMenu.MAIN_SLOT, new PixelData(canvas.getPixels()), this.nameInput.getValue(), layerData)
         );
 
         hasUnsavedChanges = false;
@@ -921,6 +1096,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return;
         }
         if (canvas != null) { canvas.close(); canvas = null; }
+        if (thumbnailManager != null) { thumbnailManager.closeAll(); }
         super.onClose();
     }
 

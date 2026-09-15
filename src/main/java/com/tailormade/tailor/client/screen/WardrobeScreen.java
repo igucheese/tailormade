@@ -89,6 +89,7 @@ public class WardrobeScreen extends Screen {
         hueBar.setH(16);
         hueBar.init();
         colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 8 + 16);
+        colorPicker.setH(16);
         colorPicker.init();
         colorPicker.setBaseColor(hueBar.getSelectedBaseColor());
 
