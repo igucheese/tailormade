@@ -250,7 +250,6 @@ public class PixelCanvas {
             for (int x = selectionStart[0]; x <= selectionEnd[0]; x++) {
                 int idx = convertXYToIndex(x, y);
                 selectedPixelsSnapshot.put((long)(y - selectionStart[1]) * width + (x - selectionStart[0]), active[idx]);
-                // 元の位置は一旦透明にする
                 active[idx] = TRANSPARENT;
             }
         }
@@ -284,7 +283,7 @@ public class PixelCanvas {
             int color = e.getValue();
             int drawX = selectionStart[0] + relX + moveOffsetX;
             int drawY = selectionStart[1] + relY + moveOffsetY;
-            if (!inBounds(drawX, drawY)) continue; // クランプ: はみ出した分は消える
+            if (!inBounds(drawX, drawY)) continue;
             active[convertXYToIndex(drawX, drawY)] = color;
         }
 
@@ -293,7 +292,6 @@ public class PixelCanvas {
         undoStack.push(new PixelEdit(activeLayerIndex, before, after));
         redoStack.clear();
 
-        // 選択範囲も移動先に更新（連続で動かせるように）
         selectionStart = new int[]{selectionStart[0] + moveOffsetX, selectionStart[1] + moveOffsetY};
         selectionEnd   = new int[]{selectionEnd[0] + moveOffsetX, selectionEnd[1] + moveOffsetY};
 
