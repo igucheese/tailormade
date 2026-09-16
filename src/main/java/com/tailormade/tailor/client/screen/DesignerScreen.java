@@ -33,6 +33,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryUtil;
 
 import java.util.*;
 
@@ -82,6 +83,15 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final ResourceLocation TOOL_ICON_SIZE_3 =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/brush_size_3.png");
 
+    private static final ResourceLocation TEMPLATE_BUTTON =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/template_btn.png");
+    private static final ResourceLocation SEG_BUTTON_R =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_regular.png");
+    private static final ResourceLocation SEG_BUTTON_S =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_slim.png");
+    private static final ResourceLocation SEG_BUTTON_N =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_off.png");
+
     private static final int GUI_W = 384;
     private static final int GUI_H = 224;
     private static final int GUI_OFFSET_X = 64;
@@ -103,6 +113,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static int BRUSH_SIZE = 1;
     private static String TOOL_MODE = "brush";
     private static boolean IS_CONTROLLING_LAYER = false;
+    private static final int SEG_BTN_X = 52;
+    private static final int SEG_BTN_Y = 210;
 
     private static final int RGB_Y_OFFSET = 4;  // エディタ下端からの距離
     private static final int RGB_BOX_W = 28;
@@ -154,6 +166,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
+    private boolean isPatternSet = false;
+    private String guideMode = "regular";
+
+    private long window;
+    private long CURSOR_DEFAULT;
+    private long CURSOR_CROSSHAIR;
+    private long CURSOR_HAND;
+
     public DesignerScreen(DesignerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = GUI_W;
@@ -163,6 +183,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     @Override
     protected void init() {
         super.init();
+
+        this.window = Minecraft.getInstance().getWindow().getWindow();
+        this.CURSOR_DEFAULT = GLFW.glfwCreateStandardCursor(GLFW.GLFW_CURSOR);
+        this.CURSOR_CROSSHAIR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_CROSSHAIR_CURSOR);
+        this.CURSOR_HAND = GLFW.glfwCreateStandardCursor(GLFW.GLFW_HAND_CURSOR);
 
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
         refreshCanvas();
@@ -222,6 +247,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private void refreshCanvas() {
+        this.isPatternSet = false;
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) {
             if (canvas != null) { canvas.close(); canvas = null; }
@@ -258,6 +284,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
         }
         canvas.init();
+        this.isPatternSet = true;
     }
 
     @Override
@@ -273,12 +300,29 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         renderPreview(g, mouseX, mouseY);
         renderRgbLabels(g);
         renderToolabr(g);
+        renderSegmentBar(g);
         renderLayers(g);
         renderPopups(g, mouseX, mouseY, partialTick);
+        setMouseCursor(mouseX, mouseY);
 
         if (showUnsavedWarning) renderUnsavedWarning(g);
         renderTooltip(g, mouseX, mouseY);
         if (canvas != null) canvas.uploadIfDirty();
+    }
+
+    private void setMouseCursor(double mx, double my) {
+        if (canvas != null && TOOL_MODE.equals("selection")) {
+            int renderX = currentRenderXY()[0];
+            int renderY = currentRenderXY()[1];
+            int[] px = screenToPixel((int) mx, (int) my, renderX, renderY, currentScale());
+            if (canvas.isSelectionSet() && px != null && canvas.isInSelection(px[0], px[1])) {
+                GLFW.glfwSetCursor(window, CURSOR_HAND);
+            } else {
+                GLFW.glfwSetCursor(window, CURSOR_CROSSHAIR);
+            }
+        } else {
+            GLFW.glfwSetCursor(window, CURSOR_DEFAULT);
+        }
     }
 
     @Override
@@ -292,12 +336,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     {
         int toolBarX = this.leftPos + TOOLBAR_X;
         int toolBarY = this.topPos + TOOLBAR_Y;
-//        g.blit(BRUSH_1_ICON, toolBarX, toolBarY, 0, 0, 10, 10, 10, 10);
-//        g.blit(BRUSH_2_ICON, toolBarX, toolBarY + 13, 0, 0, 10, 10, 10, 10);
-//        g.blit(BRUSH_3_ICON, toolBarX, toolBarY + 26, 0, 0, 10, 10, 10, 10);
-//        g.blit(BUCKET_ICON, toolBarX, toolBarY + 39, 0, 0, 10, 10, 10, 10);
-//        g.blit(EYEDROPPER_ICON, toolBarX, toolBarY + 52, 0, 0, 10, 10, 10, 10);
-//        g.blit(ERASER_ICON, toolBarX, toolBarY + 65, 0, 0, 10, 10, 10, 10);
         renderHalfSize(g, TOOL_ICON_BRUSH, toolBarX, toolBarY, 20, 20);
         renderHalfSize(g, TOOL_ICON_ERASER, toolBarX, toolBarY + 12, 20, 20);
         renderHalfSize(g, TOOL_ICON_BUCKET, toolBarX, toolBarY + 24, 20, 20);
@@ -337,6 +375,21 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         g.fill(tollBarActiveX,  toolBarActiveY + 7, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 8, labelBorderColor);
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + 8, labelBorderColor);
         g.fill(tollBarActiveX + toolBarActiveWidth - 1, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 8, labelBorderColor);
+    }
+
+    private void renderSegmentBar(GuiGraphics g) {
+        int x = this.leftPos + SEG_BTN_X;
+        int y = this.topPos + SEG_BTN_Y;
+        if (!this.isPatternSet) return;
+
+        g.blit(TEMPLATE_BUTTON, this.leftPos + 6, y, 0, 0, 43, 9, 43, 9);
+        if (guideMode.equals("regular")) {
+            g.blit(SEG_BUTTON_R, x, y, 0, 0, 64, 9, 64, 9);
+        } else if (guideMode.equals("slim")) {
+            g.blit(SEG_BUTTON_S, x, y, 0, 0, 64, 9, 64, 9);
+        } else {
+            g.blit(SEG_BUTTON_N, x, y, 0, 0, 64, 9, 64, 9);
+        }
     }
 
     private void renderHalfSize(GuiGraphics g, ResourceLocation texture, int x, int y, int w, int h) {
@@ -748,6 +801,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             this.prepareTemplates();
             return true;
         }
+        if (button == 0 && inSegmentButton(mx, my)) {
+            mouseClickedOnSegBar(mx, my);
+            return true;
+        }
         if (button == 0 && inLayerAddButton(mx, my)) {
             if (canvas == null) return true;
             if (!canvas.canAddLayer()) return true;
@@ -807,6 +864,17 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             BRUSH_SIZE = 2;
         } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (startY + 12) && my <= (startY + 17)) {
             BRUSH_SIZE = 3;
+        }
+    }
+
+    private void mouseClickedOnSegBar(double mx, double my) {
+        int startX = this.leftPos + SEG_BTN_X + 17;
+        if (mx >= startX && mx <= startX + 13) {
+            guideMode = "regular";
+        } else if (mx >= startX + 14 && mx <= startX + 31) {
+            guideMode = "slim";
+        } else if (mx >= startX + 32 && mx <= startX + 46) {
+            guideMode = "none";
         }
     }
 
@@ -1198,6 +1266,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         return inBox(mx, my, leftPos + 6, topPos + 210, 43, 9);
     }
 
+    private boolean inSegmentButton(double mx, double my) {
+        return inBox(mx, my, leftPos + SEG_BTN_X, topPos + SEG_BTN_Y, 64, 9);
+    }
+
     private boolean inLayerAddButton(double mx, double my) {
         if (canvas == null) return false;
         int y = topPos + LAYER_BAR_Y - ((canvas.getLayers().size()) * 12);
@@ -1315,6 +1387,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (previewCompositor != null) previewCompositor.close();
         if (hueBar != null) hueBar.close();
         if (colorPicker != null) colorPicker.close();
+        GLFW.glfwDestroyCursor(CURSOR_DEFAULT);
+        GLFW.glfwDestroyCursor(CURSOR_CROSSHAIR);
+        GLFW.glfwDestroyCursor(CURSOR_HAND);
         super.removed();
     }
 
@@ -1332,10 +1407,12 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (canvas == null) return;
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) return;
+        if (guideMode.equals("none")) return;
 
         PatternType type = patternItem.getPatternType(mainStack);
+        PatternType.FaceSegment[] segments = guideMode.equals("regular") ? type.getFaceSegments() : type.getSlimSegments();
 
-        for (PatternType.FaceSegment r : type.getFaceSegments()) {
+        for (PatternType.FaceSegment r : segments) {
             int sx = renderX + (int)(r.canvasX() * scale);
             int sy = renderY + (int)(r.canvasY() * scale);
             int sw = (int)(r.w() * scale);
