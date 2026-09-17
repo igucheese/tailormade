@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.tailormade.tailor.data.PatternType.*;
+import static com.tailormade.tailor.utils.DesignAccessor.getDesignDataFromId;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class PatternItem extends Item {
@@ -34,6 +35,10 @@ public class PatternItem extends Item {
     public int[] getPixelData(ItemStack stack) {
         PixelData data = getPixelDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
         return data != null ? data.pixels() : null;
+    }
+
+    public DesignDataRecord getDesignData(ItemStack stack) {
+        return getDesignDataFromId(stack.get(ModDataComponents.PATTERN_ID.get()));
     }
 
     @Override
@@ -63,8 +68,11 @@ public class PatternItem extends Item {
             tooltip.add(Component.translatable("item.tailormade.pattern.description.type." + typeName).withStyle(ChatFormatting.GRAY));
         }
         if (patternId != null) {
-//            tooltip.add(Component.translatable("item.tailormade.pattern.description.edited").withStyle(ChatFormatting.GRAY));
             DesignDataRecord dataRecord = DesignDataClientCache.get(UUID.fromString(patternId));
+            if (typeName.equals("chestplate")) {
+                String slimSuffix = dataRecord.isSlim() ? "slim" : "regular";
+                tooltip.add(Component.translatable("item.tailormade.pattern.description." + slimSuffix).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
             if (dataRecord.isLocked()) {
                 tooltip.add(Component.translatable("item.tailormade.pattern.description.locked").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             }

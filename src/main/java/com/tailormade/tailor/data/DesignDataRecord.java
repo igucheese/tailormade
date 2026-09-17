@@ -18,7 +18,8 @@ public record DesignDataRecord(
         String name,
         String type,
         boolean isLocked,
-        UUID designerId // オリジナルのデザイナーUUID。不変。
+        UUID designerId, // オリジナルのデザイナーUUID。不変。
+        boolean isSlim // 体型フラグ
 ) {
     public CompoundTag save() {
         CompoundTag nbt = new CompoundTag();
@@ -36,6 +37,7 @@ public record DesignDataRecord(
         nbt.putString("type", type);
         nbt.putBoolean("isLocked", isLocked);
         nbt.putUUID("designerId", designerId);
+        nbt.putBoolean("isSlim", isSlim);
         return nbt;
     }
 
@@ -56,21 +58,22 @@ public record DesignDataRecord(
         String type = nbt.getString("type");
         boolean isLocked = nbt.contains("isLocked") ? nbt.getBoolean("isLocked") : false;
         UUID designerId = nbt.contains("designerId") ? nbt.getUUID("designerId") : userId;
+        boolean isSlim = nbt.contains("isSlim") ? nbt.getBoolean("isSlim") : false;
 
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId, isSlim);
     }
 
     public DesignDataRecord withLocked() {
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, true, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, true, designerId, isSlim);
     }
     public DesignDataRecord withUnlocked() {
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, false, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, false, designerId, isSlim);
     }
     public DesignDataRecord withName(String newName) {
-        return new DesignDataRecord(uuid, pixelData, layers, userId, newName, type, isLocked, designerId);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, newName, type, isLocked, designerId, isSlim);
     }
     public DesignDataRecord withOriginalDesigner(UUID designer) {
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designer);
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designer, isSlim);
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, List<LayerData>> LAYERS_STREAM_CODEC =
@@ -86,6 +89,7 @@ public record DesignDataRecord(
                 buf.writeUtf(info.type());
                 buf.writeBoolean(info.isLocked());
                 buf.writeUUID(info.designerId());
+                buf.writeBoolean(info.isSlim());
             },
             buf -> {
                 return new DesignDataRecord(
@@ -96,7 +100,8 @@ public record DesignDataRecord(
                         buf.readUtf(),
                         buf.readUtf(),
                         buf.readBoolean(),
-                        buf.readUUID()
+                        buf.readUUID(),
+                        buf.readBoolean()
                 );
             }
     );

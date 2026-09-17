@@ -85,12 +85,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private static final ResourceLocation TEMPLATE_BUTTON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/template_btn.png");
+    private static final ResourceLocation SEG_BUTTON_BASE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_bottom_btns_2.png");
     private static final ResourceLocation SEG_BUTTON_R =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_regular.png");
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_reg_a.png");
     private static final ResourceLocation SEG_BUTTON_S =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_slim.png");
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_slim_a.png");
     private static final ResourceLocation SEG_BUTTON_N =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/seg_btn_off.png");
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_off_a.png");
 
     private static final int GUI_W = 384;
     private static final int GUI_H = 224;
@@ -167,7 +169,8 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
 
     private boolean isPatternSet = false;
-    private String guideMode = "regular";
+    private boolean isSlim = false;
+    private boolean isGuideVisible = true;
 
     private long window;
     private long CURSOR_DEFAULT;
@@ -285,6 +288,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
         canvas.init();
         this.isPatternSet = true;
+
+        // データ系の反映
+        DesignDataRecord record = patternItem.getDesignData(mainStack);
+        if (record != null) {
+            this.nameInput.setValue(record.name());
+            isSlim = record.isSlim();
+        }
     }
 
     @Override
@@ -383,12 +393,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (!this.isPatternSet) return;
 
         g.blit(TEMPLATE_BUTTON, this.leftPos + 6, y, 0, 0, 43, 9, 43, 9);
-        if (guideMode.equals("regular")) {
-            g.blit(SEG_BUTTON_R, x, y, 0, 0, 64, 9, 64, 9);
-        } else if (guideMode.equals("slim")) {
-            g.blit(SEG_BUTTON_S, x, y, 0, 0, 64, 9, 64, 9);
+        g.blit(SEG_BUTTON_BASE, x, y, 0, 0, 68, 9, 68, 9);
+        if (!isSlim) {
+            g.blit(SEG_BUTTON_R, x + 20, y + 1, 0, 0, 13, 7, 13, 7);
         } else {
-            g.blit(SEG_BUTTON_N, x, y, 0, 0, 64, 9, 64, 9);
+            g.blit(SEG_BUTTON_S, x + 34, y + 1, 0, 0, 17, 7, 17, 7);
+        }
+        if (!isGuideVisible) {
+            g.blit(SEG_BUTTON_N, x + 52, y + 1, 0, 0, 15, 7, 15, 7);
         }
     }
 
@@ -868,13 +880,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private void mouseClickedOnSegBar(double mx, double my) {
-        int startX = this.leftPos + SEG_BTN_X + 17;
+        int startX = this.leftPos + SEG_BTN_X + 20;
         if (mx >= startX && mx <= startX + 13) {
-            guideMode = "regular";
+            isSlim = false;
         } else if (mx >= startX + 14 && mx <= startX + 31) {
-            guideMode = "slim";
+            isSlim = true;
         } else if (mx >= startX + 32 && mx <= startX + 46) {
-            guideMode = "none";
+            isGuideVisible = !isGuideVisible;
         }
     }
 
@@ -1267,7 +1279,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private boolean inSegmentButton(double mx, double my) {
-        return inBox(mx, my, leftPos + SEG_BTN_X, topPos + SEG_BTN_Y, 64, 9);
+        return inBox(mx, my, leftPos + SEG_BTN_X, topPos + SEG_BTN_Y, 68, 9);
     }
 
     private boolean inLayerAddButton(double mx, double my) {
@@ -1363,7 +1375,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         }
 
         PacketDistributor.sendToServer(
-                new SaveDesignPayload(DesignerMenu.MAIN_SLOT, new PixelData(canvas.getPixels()), this.nameInput.getValue(), layerData)
+                new SaveDesignPayload(
+                        DesignerMenu.MAIN_SLOT,
+                        new PixelData(canvas.getPixels()),
+                        this.nameInput.getValue(),
+                        layerData,
+                        isSlim
+                )
         );
 
         hasUnsavedChanges = false;
@@ -1411,10 +1429,10 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (canvas == null) return;
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) return;
-        if (guideMode.equals("none")) return;
+        if (!isGuideVisible) return;
 
         PatternType type = patternItem.getPatternType(mainStack);
-        PatternType.FaceSegment[] segments = guideMode.equals("regular") ? type.getFaceSegments() : type.getSlimSegments();
+        PatternType.FaceSegment[] segments = !isSlim ? type.getFaceSegments() : type.getSlimSegments();
 
         for (PatternType.FaceSegment r : segments) {
             int sx = renderX + (int)(r.canvasX() * scale);
