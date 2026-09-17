@@ -1387,9 +1387,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (previewCompositor != null) previewCompositor.close();
         if (hueBar != null) hueBar.close();
         if (colorPicker != null) colorPicker.close();
-        GLFW.glfwDestroyCursor(CURSOR_DEFAULT);
-        GLFW.glfwDestroyCursor(CURSOR_CROSSHAIR);
-        GLFW.glfwDestroyCursor(CURSOR_HAND);
+        try {
+            GLFW.glfwDestroyCursor(CURSOR_DEFAULT);
+            GLFW.glfwDestroyCursor(CURSOR_CROSSHAIR);
+            GLFW.glfwDestroyCursor(CURSOR_HAND);
+        } catch (Exception e) {
+            System.out.println("[DesignerScreen.removed] " + e.getMessage());
+        }
         super.removed();
     }
 
