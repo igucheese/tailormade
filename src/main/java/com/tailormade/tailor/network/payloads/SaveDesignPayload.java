@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 
-public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name, List<LayerData> layers) implements CustomPacketPayload {
+public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name, List<LayerData> layers, boolean isSlim) implements CustomPacketPayload {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(MODID, "save_design_pattern");
 
@@ -30,6 +30,7 @@ public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name
         PixelData.STREAM_CODEC.encode(buf, packet.pixelData());
         buf.writeUtf(packet.name());
         LayerData.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buf, packet.layers());
+        buf.writeBoolean(packet.isSlim());
     }
 
     private static SaveDesignPayload decode(RegistryFriendlyByteBuf buf) {
@@ -37,7 +38,8 @@ public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name
         PixelData pixels = PixelData.STREAM_CODEC.decode(buf);
         String name = buf.readUtf();
         List<LayerData> layers = LayerData.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buf);
-        return new SaveDesignPayload(slotIndex, pixels, name, layers);
+        boolean isSlim = buf.readBoolean();
+        return new SaveDesignPayload(slotIndex, pixels, name, layers, isSlim);
     }
 
     @Override

@@ -60,6 +60,8 @@ public final class DesignDataNbtImporter {
 
         PixelData pixelData = new PixelData(pixels);
 
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId);
+        boolean isSlim = tag.contains("isSlim") ? tag.getBoolean("isSlim") : false;
+
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId, isSlim);
     }
 }

@@ -6,6 +6,8 @@
   "item.tailormade.pattern.description.edited": "Designed pattern",
   "item.tailormade.pattern.description.locked": "This pattern could only be used by original designer.",
   "item.tailormade.pattern.description.designer": "Designed by: %s",
+  "item.tailormade.pattern.description.slim": "For Slim Models",
+  "item.tailormade.pattern.description.regular": "For Classic Models",
   "item.tailormade.pattern.copied": "Copied Pattern",
   "item.tailormade.pattern.extracted": "Extracted Pattern",
   "item.tailormade.pattern.imported": "Imported Pattern",

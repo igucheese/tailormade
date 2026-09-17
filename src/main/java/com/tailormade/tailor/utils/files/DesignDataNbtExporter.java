@@ -24,6 +24,7 @@ public class DesignDataNbtExporter {
         tag.putString("type", record.type());
         tag.putBoolean("isLocked", record.isLocked());
         tag.putUUID("designerId", record.designerId());
+        tag.putBoolean("isSlim", record.isSlim());
         return tag;
     }
 }
