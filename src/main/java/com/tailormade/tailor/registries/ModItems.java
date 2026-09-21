@@ -1,6 +1,7 @@
 package com.tailormade.tailor.registries;
 
 import com.tailormade.tailor.data.PatternType;
+import com.tailormade.tailor.entities.items.CatalogBookItem;
 import com.tailormade.tailor.entities.items.PatternItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -31,4 +32,6 @@ public class ModItems {
     // その他雑貨
     public static final DeferredItem<Item> BLEACH = ITEMS.registerSimpleItem("bleach", new Item.Properties());
     public static final DeferredItem<BlockItem> MANNEQUIN_ITEM = ITEMS.registerSimpleBlockItem("mannequin", MANNEQUIN);
+    public static final DeferredItem<BlockItem> SHOWCASE_ITEM = ITEMS.registerSimpleBlockItem("showcase", SHOWCASE);
+    public static final DeferredItem<CatalogBookItem> CATALOG_BOOK = ITEMS.register("catalog_book", () -> new CatalogBookItem(new Item.Properties()));
 }

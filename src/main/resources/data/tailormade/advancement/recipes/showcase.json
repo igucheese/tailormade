@@ -1,0 +1,16 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_stick": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [ { "items": "tailormade:designer" } ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "tailormade:showcase"
+    ]
+  }
+}

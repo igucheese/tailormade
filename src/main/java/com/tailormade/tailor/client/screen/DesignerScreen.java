@@ -7,6 +7,8 @@ import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
+import com.tailormade.tailor.client.screen.ui.ScrollableWidget;
+import com.tailormade.tailor.client.screen.ui.TemplateScrollWidget;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.records.DesignTemplate;
 import com.tailormade.tailor.data.records.LayerData;
