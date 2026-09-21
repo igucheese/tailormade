@@ -188,10 +188,10 @@ public class CatalogScreen extends Screen {
             this.isEditable = this.ownerId != null ? this.ownerId.equals(this.playerId) : true;
         }
 
-        previewCompositor = TailorTextureCompositor.createForPreview();
+        previewCompositor = TailorTextureCompositor.createForPreview(this.playerId);
         originalTexture = TailorArmorRenderLayer.getPreviewOverride();
         underwearCompositor = new UnderwearTextureCompositor();
-        underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation);
+        underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation, this.playerId);
         applyUnderwearPreview();
 
         this.nameInput = new EditBox(this.font, leftPos + INPUT_X, topPos + INPUT_Y, INPUT_W, INPUT_H, Component.translatable("gui.tailormade.catalog.catalog_name.placeholder"));
