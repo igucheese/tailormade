@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "tailormade:block/showcase" },
+		"facing=south": { "model": "tailormade:block/showcase", "y": 180 },
+		"facing=west":  { "model": "tailormade:block/showcase", "y": 270 },
+		"facing=east":  { "model": "tailormade:block/showcase", "y": 90 }
+	}
+}

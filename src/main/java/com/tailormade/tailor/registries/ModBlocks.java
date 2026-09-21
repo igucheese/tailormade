@@ -35,4 +35,8 @@ public class ModBlocks {
     public static final DeferredBlock<MannequinBlock> MANNEQUIN = BLOCKS.register("mannequin",
             () -> new MannequinBlock(BlockBehaviour.Properties.of())
     );
+
+    public static final DeferredBlock<ShowcaseBlock> SHOWCASE = BLOCKS.register("showcase",
+            () -> new ShowcaseBlock(BlockBehaviour.Properties.of())
+    );
 }

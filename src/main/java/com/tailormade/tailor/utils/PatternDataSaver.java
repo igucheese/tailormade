@@ -28,15 +28,15 @@ public class PatternDataSaver {
         return true;
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName) {
-        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, designer);
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, boolean isSlim) {
+        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, designer, isSlim);
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner) {
-        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, originalDesigner, false, false, false);
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isSlim) {
+        return saveDeign(level, stack, pixelData, layers, patternItem, designer, patternName, originalDesigner, false, false, false, isSlim);
     }
 
-    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted, boolean isImported) {
+    public static DesignDataRecord saveDeign(ServerLevel level, ItemStack stack, PixelData pixelData, List<LayerData> layers, PatternItem patternItem, UUID designer, String patternName, UUID originalDesigner, boolean isCopied, boolean isExtracted, boolean isImported, boolean isSlim) {
         try {
             int[] incomingPixels = pixelData.pixels();
 
@@ -49,7 +49,15 @@ public class PatternDataSaver {
             }
             PatternType type = patternItem.getPatternType(stack);
             DesignDataRecord newDesign = new DesignDataRecord(
-                    uuid, new PixelData(incomingPixels), layers, designer, patternName, type.getType(), false, originalDesigner
+                    uuid,
+                    new PixelData(incomingPixels),
+                    layers,
+                    designer,
+                    patternName,
+                    type.getType(),
+                    false,
+                    originalDesigner,
+                    isSlim
             );
             DesignData.get(level).addDesign(newDesign);
 

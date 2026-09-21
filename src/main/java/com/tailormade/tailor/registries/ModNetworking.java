@@ -80,6 +80,26 @@ public class ModNetworking {
                 ChangeManagerMenuTabPayload.STREAM_CODEC,
                 ChangeManagerMenuTabPayload::handle
         );
+        registrar.playToServer(
+                SaveCatalogPayload.TYPE,
+                SaveCatalogPayload.STREAM_CODEC,
+                SaveCatalogPayload::handle
+        );
+        registrar.playToServer(
+                PrepareCatalogScreenPayload.TYPE,
+                PrepareCatalogScreenPayload.STREAM_CODEC,
+                PrepareCatalogScreenPayload::handle
+        );
+        registrar.playToServer(
+                GetCatalogBookPayload.TYPE,
+                GetCatalogBookPayload.STREAM_CODEC,
+                GetCatalogBookPayload::handle
+        );
+        registrar.playToServer(
+                RetrieveCatalogPayload.TYPE,
+                RetrieveCatalogPayload.STREAM_CODEC,
+                RetrieveCatalogPayload::handle
+        );
 
         /**
          * Server to Client
@@ -118,6 +138,21 @@ public class ModNetworking {
                 SyncDesignTemplatePayload.TYPE,
                 SyncDesignTemplatePayload.STREAM_CODEC,
                 SyncDesignTemplatePayload::handle
+        );
+        registrar.playToClient(
+                SyncCatalogPayload.TYPE,
+                SyncCatalogPayload.STREAM_CODEC,
+                SyncCatalogPayload::handle
+        );
+        registrar.playToClient(
+                SyncAllCatalogsPayload.TYPE,
+                SyncAllCatalogsPayload.STREAM_CODEC,
+                SyncAllCatalogsPayload::handle
+        );
+        registrar.playToClient(
+                OpenCatalogPayload.TYPE,
+                OpenCatalogPayload.STREAM_CODEC,
+                OpenCatalogPayload::handle
         );
     }
 }

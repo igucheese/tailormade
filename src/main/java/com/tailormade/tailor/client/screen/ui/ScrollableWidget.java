@@ -1,14 +1,11 @@
-package com.tailormade.tailor.client.screen;
+package com.tailormade.tailor.client.screen.ui;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ScrollableWidget<T> extends AbstractWidget {

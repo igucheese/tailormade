@@ -1,6 +1,7 @@
 package com.tailormade.tailor.data;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +16,9 @@ public class DesignDataClientCache {
     }
     public static Collection<DesignDataRecord> index() {
         return DesignDataCache.values();
+    }
+    public static List<DesignDataRecord> getMine(UUID id) {
+        return DesignDataCache.values().stream().filter(d -> d.userId().equals(id)).toList();
     }
     public static void removeCache(UUID id) { DesignDataCache.remove(id); }
 }

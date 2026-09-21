@@ -1,4 +1,4 @@
-package com.tailormade.tailor.utils;
+package com.tailormade.tailor.utils.editor;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;

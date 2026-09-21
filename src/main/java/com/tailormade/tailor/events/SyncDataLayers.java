@@ -2,6 +2,7 @@ package com.tailormade.tailor.events;
 
 import com.tailormade.tailor.Tailormade;
 import com.tailormade.tailor.data.*;
+import com.tailormade.tailor.data.records.CatalogData;
 import com.tailormade.tailor.data.records.DesignTemplate;
 import com.tailormade.tailor.network.payloads.*;
 import com.tailormade.tailor.utils.GeneralService;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class SyncDataLayers {
@@ -22,11 +24,12 @@ public class SyncDataLayers {
     }
 
     public static void syncSkinLayer(ServerPlayer player) {
-        Collection<PixelData> skins = PowderRoomSavedData.get((ServerLevel) player.level()).index();
-        for (PixelData skin : skins) {
+        Collection<PowderRoomSavedData.SkinDataRecord> skins = PowderRoomSavedData.get((ServerLevel) player.level()).getAll();
+        for (PowderRoomSavedData.SkinDataRecord record : skins) {
+            PixelData skin = record.pixelData();
             if (skin.getPixels() != null) {
-                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + player.getName().getString());
-                PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(player.getUUID(), skin.getPixels()));
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + record.uuid());
+                PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(record.uuid(), skin.getPixels()));
             } else {
                 Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
             }
@@ -34,10 +37,11 @@ public class SyncDataLayers {
     }
 
     public static void syncUnderwearLayer(ServerPlayer player) {
-        Collection<UnderwearSetting> settings = WardrobeSavedData.get((ServerLevel) player.level()).index();
-        for (UnderwearSetting setting : settings) {
-            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + setting);
-            PacketDistributor.sendToPlayer(player, new SyncUnderwearPayload(player.getUUID(), setting));
+        Collection<WardrobeSavedData.UnderwearRecord> settings = WardrobeSavedData.get((ServerLevel) player.level()).getAll();
+        for (WardrobeSavedData.UnderwearRecord record : settings) {
+            UnderwearSetting setting = record.settings();
+            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + record.uuid() + " body: " + setting);
+            PacketDistributor.sendToPlayer(player, new SyncUnderwearPayload(record.uuid(), setting));
         }
     }
 
@@ -67,5 +71,11 @@ public class SyncDataLayers {
             PacketDistributor.sendToPlayer(player, new SyncDesignTemplatePayload(t));
         }
         Tailormade.LOGGER.info("[SYNC_TEMPLATES] " + templates.size() + " design templates have been cached.");
+    }
+
+    public static void syncCatalogs(ServerPlayer player) {
+        List<CatalogData> catalogs = CatalogSavedData.get(player.serverLevel()).getAll();
+        PacketDistributor.sendToPlayer(player, new SyncAllCatalogsPayload(catalogs));
+        Tailormade.LOGGER.info("[SYNC_CATALOGS] " + catalogs.size() + " catalogs have been cached.");
     }
 }

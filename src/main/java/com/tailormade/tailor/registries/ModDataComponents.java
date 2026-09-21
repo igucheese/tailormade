@@ -77,4 +77,11 @@ public class ModDataComponents {
                             .persistent(Codec.BOOL)
                             .networkSynchronized(ByteBufCodecs.BOOL)
                             .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> CATALOG_ID =
+            COMPONENTS.register("catalog_id",
+                    () -> DataComponentType.<String>builder()
+                            .persistent(Codec.STRING)
+                            .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                            .build());
 }

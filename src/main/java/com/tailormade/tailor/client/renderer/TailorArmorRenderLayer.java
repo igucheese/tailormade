@@ -18,6 +18,7 @@ public class TailorArmorRenderLayer extends RenderLayer<AbstractClientPlayer, Pl
     private static ResourceLocation previewOverride = null;
 
     public static void setPreviewOverride(ResourceLocation tex) { previewOverride = tex; }
+    public static ResourceLocation getPreviewOverride() { return previewOverride; }
     public static void clearPreviewOverride() { previewOverride = null; }
 
     public TailorArmorRenderLayer(

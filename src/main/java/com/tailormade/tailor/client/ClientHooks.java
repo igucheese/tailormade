@@ -1,15 +1,19 @@
 package com.tailormade.tailor.client;
 
+import com.tailormade.tailor.client.screen.CatalogScreen;
 import com.tailormade.tailor.client.screen.PowderRoomScreen;
 import com.tailormade.tailor.client.screen.WardrobeScreen;
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
 import com.tailormade.tailor.network.payloads.SyncMannequinPayload;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+
+import java.util.UUID;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientHooks {
@@ -33,11 +37,15 @@ public class ClientHooks {
         }
     }
 
-    public static void openPowderRoomScreen() {
-        Minecraft.getInstance().setScreen(new PowderRoomScreen());
+    public static void openPowderRoomScreen(UUID playerId) {
+        Minecraft.getInstance().setScreen(new PowderRoomScreen(playerId));
     }
 
     public static void openWardrobeScreen() {
         Minecraft.getInstance().setScreen(new WardrobeScreen());
+    }
+
+    public static void openCatalogScreen(UUID catalogId, boolean isFromLectern, BlockPos pos) {
+        Minecraft.getInstance().setScreen(new CatalogScreen(catalogId, isFromLectern, pos));
     }
 }

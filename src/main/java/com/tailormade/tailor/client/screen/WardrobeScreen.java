@@ -71,6 +71,7 @@ public class WardrobeScreen extends Screen {
     private TailorTextureCompositor previewCompositor;
     private static final ResourceLocation defaultUnderwearLocation = ResourceLocation.fromNamespaceAndPath(MODID, "textures/underwear/male_boxer.png");
     private ResourceLocation composedTexture = null;
+    private UUID playerId;
 
     public WardrobeScreen() {
         super(Component.translatable("gui.tailormade.wardrobe"));
@@ -97,6 +98,7 @@ public class WardrobeScreen extends Screen {
         UnderwearSetting current = null;
         if (mc.player != null) {
             current = UnderwearDataClientCache.get(mc.player.getUUID());
+            playerId = mc.player.getUUID();
             if (current != null) {
                 selectedType = current.type();
                 selectedColor = current.color();
@@ -104,7 +106,7 @@ public class WardrobeScreen extends Screen {
             }
         }
 
-        PixelData existingData = SkinDataClientCache.get(mc.player.getUUID());
+        PixelData existingData = SkinDataClientCache.get(playerId);
         if (existingData == null) {
             canvas = new PixelCanvas(64, 64);
             canvas.init();
@@ -113,9 +115,9 @@ public class WardrobeScreen extends Screen {
             canvas.setIsSkin(true);
         }
 
-        previewCompositor = TailorTextureCompositor.createForPreview();
+        previewCompositor = TailorTextureCompositor.createForPreview(playerId);
         underwearCompositor = new UnderwearTextureCompositor();
-        underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation);
+        underwearCompositor.init(current != null ? current.type().getTexture() : defaultUnderwearLocation, playerId);
         applyUnderwearPreview();
 
         int saveX = leftPos + PV_X + PV_W - 63;
@@ -236,7 +238,7 @@ public class WardrobeScreen extends Screen {
         } else if (mx >= (this.leftPos + TYPE_X) && mx <= (this.leftPos + TYPE_X + TYPE_SIZE) && my >= (this.topPos + TYPE_Y+ (TYPE_SIZE * 3)) && my <= (this.topPos + TYPE_Y + (TYPE_SIZE * 4))) {
             selectedType = UnderwearType.FEMALE_BIKINI;
         }
-        underwearCompositor.init(selectedType.getTexture());
+        underwearCompositor.init(selectedType.getTexture(), playerId);
     }
 
     @Override
