@@ -31,8 +31,8 @@ public class TailorTextureCompositor {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
     private boolean hasData = false;
 
-    public static TailorTextureCompositor getOrCreate(UUID uuid) {
-        return CACHE.computeIfAbsent(uuid, k -> new TailorTextureCompositor());
+    public static TailorTextureCompositor getOrCreate(UUID playerId) {
+        return CACHE.computeIfAbsent(playerId, k -> new TailorTextureCompositor(playerId));
     }
 
     public static void invalidate(UUID uuid) {
@@ -40,13 +40,13 @@ public class TailorTextureCompositor {
         if (c != null) c.close();
     }
 
-    public static TailorTextureCompositor createForPreview() {
-        return new TailorTextureCompositor();
+    public static TailorTextureCompositor createForPreview(UUID playerId) {
+        return new TailorTextureCompositor(playerId);
     }
 
-    private TailorTextureCompositor() {
+    private TailorTextureCompositor(UUID playerId) {
         dynamicTexture = new DynamicTexture(SKIN_W, SKIN_H, true);
-        String textureName = "tailor_composite_" + COUNTER.getAndIncrement();
+        String textureName = "tailor_composite_" + playerId.toString() + COUNTER.getAndIncrement();
         textureLocation = Minecraft.getInstance()
                 .getTextureManager()
                 .register(textureName, dynamicTexture);

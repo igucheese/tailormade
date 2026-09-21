@@ -26,6 +26,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
@@ -131,11 +132,13 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
+    private Player player;
 
     public DesignerScreen(DesignerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
+        this.player = playerInv.player;
     }
 
     @Override
@@ -178,7 +181,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                 .build();
         addRenderableWidget(saveButton);
 
-        previewCompositor = TailorTextureCompositor.createForPreview();
+        previewCompositor = TailorTextureCompositor.createForPreview(this.player.getUUID());
     }
 
     private EditBox makeRgbBox(int x, int y, String hint) {

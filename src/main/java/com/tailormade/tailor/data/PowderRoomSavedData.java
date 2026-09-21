@@ -43,6 +43,9 @@ public class PowderRoomSavedData extends SavedData {
     public Collection<PixelData> index() {
         return skinLayers.values().stream().map(SkinDataRecord::pixelData).toList();
     }
+    public Collection<SkinDataRecord> getAll() {
+        return skinLayers.values();
+    }
 
     public void removeSkinLayer(UUID uuid) {
         skinLayers.remove(uuid);

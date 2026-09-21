@@ -11,6 +11,8 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+import java.util.UUID;
+
 @OnlyIn(Dist.CLIENT)
 public class ClientHooks {
     public static void syncMannequin(SyncMannequinPayload payload)
@@ -33,8 +35,8 @@ public class ClientHooks {
         }
     }
 
-    public static void openPowderRoomScreen() {
-        Minecraft.getInstance().setScreen(new PowderRoomScreen());
+    public static void openPowderRoomScreen(UUID playerId) {
+        Minecraft.getInstance().setScreen(new PowderRoomScreen(playerId));
     }
 
     public static void openWardrobeScreen() {
