@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UnderwearTextureCompositor {
@@ -21,7 +22,7 @@ public class UnderwearTextureCompositor {
 
     public UnderwearTextureCompositor() {}
 
-    public void init(ResourceLocation maskResource) {
+    public void init(ResourceLocation maskResource, UUID playerId) {
         try {
             var resourceManager = Minecraft.getInstance().getResourceManager();
             var resource = resourceManager.getResource(maskResource).orElseThrow();
@@ -46,7 +47,7 @@ public class UnderwearTextureCompositor {
             }
 
             dynamicTexture = new DynamicTexture(maskW, maskH, true);
-            String textureName = "tailormade_underwear_composite_" + COUNTER.getAndIncrement();
+            String textureName = "tailormade_underwear_composite_" + playerId.toString() + COUNTER.getAndIncrement();
             textureLocation = Minecraft.getInstance()
                     .getTextureManager()
                     .register(textureName, dynamicTexture);

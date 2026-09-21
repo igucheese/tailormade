@@ -21,7 +21,7 @@ public class PowderRoomBlock extends FacingBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (level.isClientSide) {
-            ClientHooks.openPowderRoomScreen();
+            ClientHooks.openPowderRoomScreen(player.getUUID());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

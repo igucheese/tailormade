@@ -108,14 +108,14 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
     private ResourceLocation resolveSkinTexture(AbstractClientPlayer player) {
         if (skinPreviewOverride != null) return skinPreviewOverride;
 
-        UUID uuid = player.getUUID();
-        PixelData data = SkinDataClientCache.get(uuid);
+        UUID playerId = player.getUUID();
+        PixelData data = SkinDataClientCache.get(playerId);
         int[] pixels = data != null ? data.getPixels() : null;
 
         if (pixels == null || pixels.length != 64 * 64) {
             return null;
         }
-        TailorTextureCompositor compositor = SKIN_CACHE.computeIfAbsent(uuid, k -> TailorTextureCompositor.createForPreview());
+        TailorTextureCompositor compositor = SKIN_CACHE.computeIfAbsent(playerId, k -> TailorTextureCompositor.createForPreview(playerId));
 
         Map<PatternType, int[]> pixelMap = buildSkinPixelMap(player, pixels);
         if (pixelMap.isEmpty()) return null;
@@ -184,19 +184,19 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
         return slots;
     }
 
-    private static ResourceLocation composeUnderwearTexture(UUID uuid, UnderwearSetting setting, Set<EquipmentSlot> activeSlots) {
-        UnderwearType currentType = UNDERWEAR_TYPE_CACHE.get(uuid);
+    private static ResourceLocation composeUnderwearTexture(UUID playerId, UnderwearSetting setting, Set<EquipmentSlot> activeSlots) {
+        UnderwearType currentType = UNDERWEAR_TYPE_CACHE.get(playerId);
 
         if (currentType != setting.type()) {
-            UnderwearTextureCompositor old = UNDERWEAR_COMPOSITOR_CACHE.remove(uuid);
+            UnderwearTextureCompositor old = UNDERWEAR_COMPOSITOR_CACHE.remove(playerId);
             if (old != null) old.close();
-            UNDERWEAR_TYPE_CACHE.put(uuid, setting.type());
+            UNDERWEAR_TYPE_CACHE.put(playerId, setting.type());
         }
 
         UnderwearTextureCompositor compositor = UNDERWEAR_COMPOSITOR_CACHE.computeIfAbsent(
-                uuid, k -> {
+                playerId, k -> {
                     UnderwearTextureCompositor c = new UnderwearTextureCompositor();
-                    c.init(setting.type().getTexture());
+                    c.init(setting.type().getTexture(), playerId);
                     return c;
                 }
         );

@@ -29,6 +29,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
@@ -114,11 +115,13 @@ public class PowderRoomScreen extends Screen {
 
     private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
+    private UUID playerId = null;
 
-    public PowderRoomScreen() {
+    public PowderRoomScreen(UUID playerId) {
         super(Component.translatable("gui.tailormade.powder_room"));
         this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
+        this.playerId = playerId;
     }
 
     @Override
@@ -126,7 +129,7 @@ public class PowderRoomScreen extends Screen {
         leftPos = (width  - GUI_W) / 2;
         topPos = (height - GUI_H) / 2;
 
-        previewCompositor = TailorTextureCompositor.createForPreview();
+        previewCompositor = TailorTextureCompositor.createForPreview(this.playerId);
 
         canvas = new PixelCanvas(64, 64);
         canvas.init();

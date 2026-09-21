@@ -24,11 +24,12 @@ public class SyncDataLayers {
     }
 
     public static void syncSkinLayer(ServerPlayer player) {
-        Collection<PixelData> skins = PowderRoomSavedData.get((ServerLevel) player.level()).index();
-        for (PixelData skin : skins) {
+        Collection<PowderRoomSavedData.SkinDataRecord> skins = PowderRoomSavedData.get((ServerLevel) player.level()).getAll();
+        for (PowderRoomSavedData.SkinDataRecord record : skins) {
+            PixelData skin = record.pixelData();
             if (skin.getPixels() != null) {
-                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + player.getName().getString());
-                PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(player.getUUID(), skin.getPixels()));
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + record.uuid());
+                PacketDistributor.sendToPlayer(player, new SyncSkinLayerPayload(record.uuid(), skin.getPixels()));
             } else {
                 Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
             }
@@ -36,10 +37,11 @@ public class SyncDataLayers {
     }
 
     public static void syncUnderwearLayer(ServerPlayer player) {
-        Collection<UnderwearSetting> settings = WardrobeSavedData.get((ServerLevel) player.level()).index();
-        for (UnderwearSetting setting : settings) {
-            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + player.getName().getString() + " body: " + setting);
-            PacketDistributor.sendToPlayer(player, new SyncUnderwearPayload(player.getUUID(), setting));
+        Collection<WardrobeSavedData.UnderwearRecord> settings = WardrobeSavedData.get((ServerLevel) player.level()).getAll();
+        for (WardrobeSavedData.UnderwearRecord record : settings) {
+            UnderwearSetting setting = record.settings();
+            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + record.uuid() + " body: " + setting);
+            PacketDistributor.sendToPlayer(player, new SyncUnderwearPayload(record.uuid(), setting));
         }
     }
 

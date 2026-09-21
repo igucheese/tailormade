@@ -52,6 +52,9 @@ public class WardrobeSavedData extends SavedData {
     public Collection<UnderwearSetting> index() {
         return settings.values().stream().map(UnderwearRecord::settings).toList();
     }
+    public Collection<UnderwearRecord> getAll() {
+        return settings.values();
+    }
 
     public WardrobeSavedData() {}
     public static WardrobeSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
