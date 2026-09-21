@@ -3,7 +3,7 @@ package com.tailormade.tailor.utils.files;
 import com.tailormade.tailor.data.DesignDataRecord;
 import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.PixelData;
-import com.tailormade.tailor.utils.LayerService;
+import com.tailormade.tailor.utils.editor.LayerService;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -60,6 +60,8 @@ public final class DesignDataNbtImporter {
 
         PixelData pixelData = new PixelData(pixels);
 
-        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId);
+        boolean isSlim = tag.contains("isSlim") ? tag.getBoolean("isSlim") : false;
+
+        return new DesignDataRecord(uuid, pixelData, layers, userId, name, type, isLocked, designerId, isSlim);
     }
 }

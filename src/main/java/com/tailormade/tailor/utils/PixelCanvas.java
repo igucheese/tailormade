@@ -7,15 +7,14 @@ import com.tailormade.tailor.data.records.EditorActions;
 import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.records.LayerStructureChange;
 import com.tailormade.tailor.data.records.PixelEdit;
+import com.tailormade.tailor.utils.editor.LayerService;
+import com.tailormade.tailor.utils.editor.LineDrawHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.tailormade.tailor.data.Constants.DEFAULT_COLOR;
-import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
 public class PixelCanvas {
     public record Layer(boolean isVisible, int[] pixelData, int alpha) {}
@@ -40,6 +39,19 @@ public class PixelCanvas {
     private ResourceLocation textureLocation;
     private boolean dirty = false;
     private boolean isSkin = false;
+
+    // 直線用
+    private int[] lastPlacedPixel = null;
+    private List<int[]> previewLinePixels = null;
+    // 選択用
+    private int[] selectionSelectStart = null;
+    private int[] selectionSelectEnd = null;
+    private int[] selectionStart = null;
+    private int[] selectionEnd = null;
+    private Map<Long, Integer> selectedPixelsSnapshot = null; // index, color
+    private int moveOffsetX = 0;
+    private int moveOffsetY = 0;
+    private boolean isMovingSelection = false;
 
     // レイヤー縮小表示用
     private final Map<Integer, DynamicTexture> layerThumbnails = new HashMap<>();
@@ -143,8 +155,156 @@ public class PixelCanvas {
         setPixel(x, y, TRANSPARENT, brushSize);
     }
 
+    // 直線描画処理
+    public boolean drawLine() {
+        return lastPlacedPixel != null;
+    }
+    public void setLastPixel(int x, int y) {
+        lastPlacedPixel = new int[]{x, y};
+    }
+    public void clearLastPixel() {
+        lastPlacedPixel = null;
+    }
+    public void clearPreviewLine() {
+        previewLinePixels = null;
+    }
+    public List<int[]> getPreviewLinePixels() { return previewLinePixels; }
+    public void calculateLine(int x, int y) {
+        if (lastPlacedPixel == null) { return; }
+        previewLinePixels = LineDrawHelper.getLinePixels(lastPlacedPixel[0], lastPlacedPixel[1], x, y);
+    }
+    public void drawPreviewLine(int x, int y) {
+        calculateLine(x, y);
+    }
+    public void commitLine(int x, int y, int argbColor, int brushSize) {
+        int[] before = layers.get(activeLayerIndex).pixelData();
+        calculateLine(x, y);
+        for (int[] p : previewLinePixels) {
+            setPixel(p[0], p[1], argbColor, brushSize);
+        }
+        int[] after = layers.get(activeLayerIndex).pixelData();
+        undoStack.push(new PixelEdit(activeLayerIndex, before, after));
+        redoStack.clear();
+    }
+
+    // 矩形選択・移動処理
+    public boolean isSelectionStarted() {
+        return selectionSelectStart != null;
+    }
+    public void setSelectionStart(int x, int y) {
+        selectionSelectStart = new int[]{x, y};
+        selectionStart = null;
+        selectionEnd = null;
+    }
+    public void setSelectionSelectEnd(int x, int y) {
+        selectionSelectEnd = new int[]{x, y};
+    }
+    public boolean isSelectionSet() {
+        return selectionStart != null && selectionEnd != null;
+    }
+    public void setSelectionAuto() {
+        if (selectionSelectStart == null || selectionSelectEnd == null) return;
+        int x0 = selectionSelectStart[0];
+        int y0 = selectionSelectStart[1];
+        int x1 = selectionSelectEnd[0];
+        int y1 = selectionSelectEnd[1];
+        setSelection(x0, y0, x1, y1);
+    }
+    public void setSelection(int x0, int y0, int x1, int y1) {
+        selectionStart = new int[]{Math.min(x0, x1), Math.min(y0, y1)};
+        selectionEnd = new int[]{Math.max(x0, x1), Math.max(y0, y1)};
+        selectionSelectStart = null;
+        selectionSelectEnd = null;
+    }
+    public boolean isInSelection(int x, int y) {
+        if (selectionStart == null) return false;
+        return x >= selectionStart[0] && x <= selectionEnd[0] && y >= selectionStart[1] && y <= selectionEnd[1];
+    }
+    public int[] getSelectionStart() { return selectionStart; }
+    public int[] getSelectionEnd() { return selectionEnd; }
+    public int[] getTempSelectionStart() {
+        if (selectionSelectStart == null || selectionSelectEnd == null) { return null; }
+        return new int[]{Math.min(selectionSelectStart[0], selectionSelectEnd[0]), Math.min(selectionSelectStart[1], selectionSelectEnd[1])};
+    }
+    public int[] getTempSelectionEnd() {
+        if (selectionSelectStart == null || selectionSelectEnd == null) { return null; }
+        return new int[]{Math.max(selectionSelectStart[0], selectionSelectEnd[0]), Math.max(selectionSelectStart[1], selectionSelectEnd[1])};
+    }
+    public void clearSelection() {
+        selectionStart = null;
+        selectionEnd = null;
+        selectionSelectStart = null;
+        selectionSelectEnd = null;
+        selectedPixelsSnapshot = null;
+        isMovingSelection = false;
+    }
+    public boolean isMovingSelection() {
+        return isMovingSelection;
+    }
+    public void startMoveSelection() {
+        if (selectionStart == null) return;
+        int[] active = layers.get(activeLayerIndex).pixelData();
+        selectedPixelsSnapshot = new HashMap<>();
+
+        for (int y = selectionStart[1]; y <= selectionEnd[1]; y++) {
+            for (int x = selectionStart[0]; x <= selectionEnd[0]; x++) {
+                int idx = convertXYToIndex(x, y);
+                selectedPixelsSnapshot.put((long)(y - selectionStart[1]) * width + (x - selectionStart[0]), active[idx]);
+                active[idx] = TRANSPARENT;
+            }
+        }
+        moveOffsetX = 0;
+        moveOffsetY = 0;
+        isMovingSelection = true;
+        markDirty();
+    }
+    public void updateMoveOffset(int dx, int dy) {
+        if (!isMovingSelection) return;
+        moveOffsetX = dx;
+        moveOffsetY = dy;
+        markDirty();
+    }
+    public void addMoveOffset(String direction, int amount) {
+        if (!isMovingSelection) return;
+        if (direction.equals("x")) moveOffsetX += amount;
+        if (direction.equals("y")) moveOffsetY += amount;
+        markDirty();
+    }
+    public void commitMoveSelection() {
+        if (!isMovingSelection || selectedPixelsSnapshot == null) return;
+
+        int[] before = layers.get(activeLayerIndex).pixelData().clone();
+
+        int[] active = layers.get(activeLayerIndex).pixelData();
+        for (Map.Entry<Long, Integer> e : selectedPixelsSnapshot.entrySet()) {
+            long key = e.getKey();
+            int relX = (int)(key % width);
+            int relY = (int)(key / width);
+            int color = e.getValue();
+            int drawX = selectionStart[0] + relX + moveOffsetX;
+            int drawY = selectionStart[1] + relY + moveOffsetY;
+            if (!inBounds(drawX, drawY)) continue;
+            active[convertXYToIndex(drawX, drawY)] = color;
+        }
+
+        int[] after = active.clone();
+        if (undoStack.size() >= HISTORY_MAX) undoStack.pollLast();
+        undoStack.push(new PixelEdit(activeLayerIndex, before, after));
+        redoStack.clear();
+
+        selectionStart = new int[]{selectionStart[0] + moveOffsetX, selectionStart[1] + moveOffsetY};
+        selectionEnd   = new int[]{selectionEnd[0] + moveOffsetX, selectionEnd[1] + moveOffsetY};
+
+        selectedPixelsSnapshot = null;
+        isMovingSelection = false;
+        moveOffsetX = 0;
+        moveOffsetY = 0;
+        markDirty();
+    }
+
     public void setActiveLayerIndex(int index) {
         this.activeLayerIndex = index;
+        this.clearLastPixel();
     }
     public int[] getActiveLayerPixels() {
         return this.layers.get(this.activeLayerIndex).pixelData();
@@ -223,6 +383,14 @@ public class PixelCanvas {
         if (index >= layers.size() || index < 0) return true;
         return layers.get(index).isVisible();
     }
+    public void setLayerAlpha(int change) {
+        Layer layer = layers.get(activeLayerIndex);
+        int newAlpha = layer.alpha() + change;
+        if (newAlpha <= 0) newAlpha = 0;
+        if (newAlpha >= 100) newAlpha = 100;
+        layers.set(activeLayerIndex, new Layer(layer.isVisible(), layer.pixelData(), newAlpha));
+        markDirty();
+    }
 
     private void recomposite() {
         Arrays.fill(compositedPixels, TRANSPARENT);
@@ -231,13 +399,33 @@ public class PixelCanvas {
             for (int i = 0; i < compositedPixels.length; i++) {
                 int top = layer.pixelData()[i];
                 int topAlpha = (top >>> 24) & 0xFF;
+                int layerAlpha = layer.alpha();
                 if (topAlpha == 0) continue;
-                if (topAlpha == 255) {
+                double alpha = 255.0 * (layerAlpha / 100.0);
+                if (layerAlpha == 100) {
                     compositedPixels[i] = top;
                 } else {
-                    compositedPixels[i] = alphaBlend(compositedPixels[i], top, topAlpha);
+                    compositedPixels[i] = alphaBlend(compositedPixels[i], top, (int) alpha);
                 }
             }
+        }
+        applyMovingSelectionOverlay();
+    }
+
+    private void applyMovingSelectionOverlay() {
+        if (!isMovingSelection || selectedPixelsSnapshot == null) return;
+        for (Map.Entry<Long, Integer> e : selectedPixelsSnapshot.entrySet()) {
+            long key = e.getKey();
+            int relX = (int)(key % width);
+            int relY = (int)(key / width);
+            int color = e.getValue();
+            int drawX = selectionStart[0] + relX + moveOffsetX;
+            int drawY = selectionStart[1] + relY + moveOffsetY;
+            if (!inBounds(drawX, drawY)) continue;
+            int idx = convertXYToIndex(drawX, drawY);
+            int a = (color >>> 24) & 0xFF;
+            if (a == 0) continue;
+            compositedPixels[idx] = (a == 255) ? color : alphaBlend(compositedPixels[idx], color, a);
         }
     }
 

@@ -74,7 +74,7 @@ public class SaveDesignPayloadHandler {
         if (!isValidSize) { return; }
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), packet.layers(), patternItem, player.getUUID(), name);
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), packet.layers(), patternItem, player.getUUID(), name, packet.isSlim());
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_saved"), true);
