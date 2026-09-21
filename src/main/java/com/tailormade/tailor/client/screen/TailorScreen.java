@@ -20,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.ContainerListener;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -53,17 +54,19 @@ public class TailorScreen extends AbstractContainerScreen<TailorMenu> {
 
     private Button confirmButton;
     private TailorTextureCompositor previewCompositor;
+    private Player player;
 
     public TailorScreen(TailorMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = GUI_W;
         this.imageHeight = GUI_H;
+        this.player = playerInv.player;
     }
 
     @Override
     protected void init() {
         super.init();
-        previewCompositor = TailorTextureCompositor.createForPreview();
+        previewCompositor = TailorTextureCompositor.createForPreview(this.player.getUUID());
 
         int btnX = leftPos + PV_X + (PV_W - BTN_W) / 2;
         int btnY = topPos + PV_Y + PV_H + 4 + 50;

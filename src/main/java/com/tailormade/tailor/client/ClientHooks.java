@@ -37,8 +37,8 @@ public class ClientHooks {
         }
     }
 
-    public static void openPowderRoomScreen() {
-        Minecraft.getInstance().setScreen(new PowderRoomScreen());
+    public static void openPowderRoomScreen(UUID playerId) {
+        Minecraft.getInstance().setScreen(new PowderRoomScreen(playerId));
     }
 
     public static void openWardrobeScreen() {
