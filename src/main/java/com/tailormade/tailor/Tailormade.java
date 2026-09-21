@@ -58,6 +58,8 @@ public class Tailormade {
                 output.accept(BLEACHING_COUNTER_ITEM.get());
                 output.accept(POWDER_ROOM_ITEM.get());
                 output.accept(WARDROBE_ITEM.get());
+                output.accept(SHOWCASE_ITEM.get());
+                output.accept(CATALOG_BOOK.get());
 
                 output.accept(BLEACH.get());
                 output.accept(MANNEQUIN_ITEM.get());

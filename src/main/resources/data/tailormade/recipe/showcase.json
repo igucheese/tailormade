@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "BAB",
+    " B "
+  ],
+  "key": {
+    "A": { "item": "tailormade:designer" },
+    "B": { "tag": "minecraft:planks" }
+  },
+  "result": {
+    "id": "tailormade:showcase",
+    "count": 1
+  }
+}
