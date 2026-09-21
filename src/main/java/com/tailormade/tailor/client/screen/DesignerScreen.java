@@ -7,6 +7,8 @@ import com.tailormade.tailor.client.gui.HueBarWidget;
 import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.client.renderer.TailorArmorRenderLayer;
 import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
+import com.tailormade.tailor.client.screen.ui.ScrollableWidget;
+import com.tailormade.tailor.client.screen.ui.TemplateScrollWidget;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.records.DesignTemplate;
 import com.tailormade.tailor.data.records.LayerData;
@@ -33,7 +35,6 @@ import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;

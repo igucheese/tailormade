@@ -1,6 +1,7 @@
 package com.tailormade.tailor.registries;
 
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
+import com.tailormade.tailor.entities.blockentities.ShowcaseBlockEntity;
 import com.tailormade.tailor.entities.blockentities.TailorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -31,5 +32,13 @@ public class ModBlockEntities {
                     EntityType.Builder.<MannequinEntity>of(MannequinEntity::new, MobCategory.MISC)
                             .sized(0.6F, 1.975F)
                             .build("mannequin")
+            );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShowcaseBlockEntity>> SHOWCASE_BLOCK_ENTITY =
+            BLOCK_ENTITIES.register("showcase_block_entity", () ->
+                    BlockEntityType.Builder.of(
+                            ShowcaseBlockEntity::new,
+                            ModBlocks.SHOWCASE.get()
+                    ).build(null)
             );
 }

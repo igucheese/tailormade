@@ -2,6 +2,7 @@ package com.tailormade.tailor.events;
 
 import com.tailormade.tailor.Tailormade;
 import com.tailormade.tailor.data.*;
+import com.tailormade.tailor.data.records.CatalogData;
 import com.tailormade.tailor.data.records.DesignTemplate;
 import com.tailormade.tailor.network.payloads.*;
 import com.tailormade.tailor.utils.GeneralService;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class SyncDataLayers {
@@ -67,5 +69,11 @@ public class SyncDataLayers {
             PacketDistributor.sendToPlayer(player, new SyncDesignTemplatePayload(t));
         }
         Tailormade.LOGGER.info("[SYNC_TEMPLATES] " + templates.size() + " design templates have been cached.");
+    }
+
+    public static void syncCatalogs(ServerPlayer player) {
+        List<CatalogData> catalogs = CatalogSavedData.get(player.serverLevel()).getAll();
+        PacketDistributor.sendToPlayer(player, new SyncAllCatalogsPayload(catalogs));
+        Tailormade.LOGGER.info("[SYNC_CATALOGS] " + catalogs.size() + " catalogs have been cached.");
     }
 }

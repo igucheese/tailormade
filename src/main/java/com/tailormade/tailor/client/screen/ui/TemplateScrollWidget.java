@@ -1,4 +1,4 @@
-package com.tailormade.tailor.client.screen;
+package com.tailormade.tailor.client.screen.ui;
 
 import com.tailormade.tailor.data.records.DesignTemplate;
 import net.minecraft.client.Minecraft;
