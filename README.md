@@ -1,4 +1,4 @@
-<p><img src="./.idea/icon.png" alt="Logo" width="200"></p>
+<p align="center"><img src="./.idea/icon.png" alt="Logo" width="200"></p>
 <h1 align="center">Tailormade<br></h1>
 
 <p align="center">Customize your clothing freely with the Tailormade Mod!</p>
